@@ -1,0 +1,28 @@
+# 环境变量文件（包含敏感信息）
+.env
+
+# 日志文件
+*.log
+
+# Environment files
+.env
+
+# Log files
+*.log
+
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
