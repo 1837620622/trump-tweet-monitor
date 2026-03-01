@@ -5,284 +5,312 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trump Tweet Monitor | 特朗普推文监控</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                    },
                     colors: {
-                        trump: { red: '#C8102E', blue: '#002868', gold: '#FFD700' }
+                        trump: {
+                            red: '#C8102E',     // GOP Red
+                            blue: '#002868',    // Flag Blue
+                            gold: '#FFD700',    // Luxury Gold
+                            dark: '#0A0E17',    // Deep Background
+                            card: '#1F2937'     // Card Background
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        /* 玻璃拟态效果 */
-        .glass { 
-            background: rgba(255, 255, 255, 0.08); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .glass-strong {
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-        
-        /* 渐变背景 - 更丰富的层次 */
-        .gradient-bg { 
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        /* 核心样式与玻璃拟态 */
+        body {
+            background-color: #0A0E17;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(200, 16, 46, 0.08) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 40, 104, 0.1) 0%, transparent 25%);
             background-attachment: fixed;
         }
-        
-        /* 动态背景光效 */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 20% 80%, rgba(200, 16, 46, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(0, 40, 104, 0.2) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.08) 0%, transparent 40%);
-            animation: bgFloat 20s ease-in-out infinite;
-            z-index: -1;
-            pointer-events: none;
+
+        .glass-nav {
+            background: rgba(10, 14, 23, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        @keyframes bgFloat {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(2%, 2%) rotate(1deg); }
-            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+
+        .glass-card {
+            background: rgba(31, 41, 55, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        
-        /* 推文卡片 - 弹性动画 */
-        .tweet-card { 
-            transition: transform 550ms linear(0, 0.1719, 0.4986, 0.7952, 0.9887, 1.0779, 1.0939, 1.0726, 1.0412, 1.0148, 0.9986, 0.9919, 0.9913, 0.9937, 0.9967, 0.999, 1.0003, 1),
-                        box-shadow 0.3s ease;
+
+        .glass-card:hover {
+            background: rgba(31, 41, 55, 0.6);
+            border-color: rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
         }
-        .tweet-card:hover { 
-            transform: translateY(-8px) scale(1.01); 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 30px rgba(255, 215, 0, 0.1);
-        }
-        
-        /* 加载动画 */
-        .shimmer { 
-            background: linear-gradient(90deg, rgba(31,41,55,0.8) 25%, rgba(55,65,81,0.9) 50%, rgba(31,41,55,0.8) 75%); 
-            background-size: 200% 100%; 
-            animation: shimmer 1.5s infinite;
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* 动画类 */
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
         }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
-        /* 脉冲点 */
-        .pulse-dot { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
-        
-        /* 淡入动画 */
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(30px) scale(0.98); } 
-            to { opacity: 1; transform: translateY(0) scale(1); } 
-        }
-        
-        /* 悬浮光效 */
-        .glow-gold { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-        .glow-blue { box-shadow: 0 0 20px rgba(0, 40, 104, 0.4); }
-        
-        /* 按钮悬停效果 */
-        .btn-hover {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .btn-hover::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-        .btn-hover:hover::after {
-            width: 300px;
-            height: 300px;
-        }
-        
-        /* 统计卡片动画 */
-        .stat-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-        }
-        
-        /* 渐变文字 */
-        .gradient-text {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
+
+        /* 文本渐变 */
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        
-        /* 水印浮动动画 */
-        .watermark {
-            animation: watermarkFloat 3s ease-in-out infinite;
-        }
-        @keyframes watermarkFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        
-        /* 滚动条美化 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,215,0,0.5); }
     </style>
 </head>
-<body class="gradient-bg min-h-screen font-sans text-white">
-    <!-- Header -->
-    <header class="sticky top-0 z-50 glass border-b border-white/10">
-        <div class="max-w-6xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
+<body class="text-gray-100 min-h-screen font-sans selection:bg-trump-gold selection:text-trump-dark antialiased">
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-trump-red to-trump-blue flex items-center justify-center text-2xl">🦅</div>
+                    <div class="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-trump-blue to-trump-dark rounded-xl border border-white/10 shadow-lg group overflow-hidden">
+                        <div class="absolute inset-0 bg-trump-red/20 group-hover:bg-trump-red/30 transition-colors"></div>
+                        <i class="fa-solid fa-flag-usa text-lg text-trump-gold relative z-10 group-hover:scale-110 transition-transform"></i>
+                    </div>
                     <div>
-                        <h1 class="text-xl font-bold">Trump Tweet Monitor</h1>
-                        <p class="text-sm text-gray-400">特朗普 Truth Social 实时监控 · <span class="text-trump-gold">传康KK</span></p>
+                        <h1 class="text-lg font-bold tracking-tight">Trump Monitor</h1>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Real-time Truth Social</p>
                     </div>
                 </div>
+
+                <!-- 右侧操作 -->
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 text-sm">
-                        <span class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></span>
-                        <span class="text-gray-400">实时更新</span>
+                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span class="text-xs text-gray-400 font-medium">Live</span>
                     </div>
-                    <button onclick="refreshTweets()" class="btn-hover px-4 py-2 bg-gradient-to-r from-trump-blue to-blue-600 hover:from-blue-600 hover:to-trump-blue rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        刷新
+                    
+                    <button onclick="refreshTweets()" class="group relative px-4 py-2 bg-trump-blue hover:bg-blue-800 text-white text-sm font-medium rounded-lg transition-all shadow-lg hover:shadow-trump-blue/50 overflow-hidden">
+                        <span class="relative z-10 flex items-center gap-2">
+                            <i class="fa-solid fa-sync group-hover:animate-spin-slow"></i> 刷新
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                     </button>
                 </div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Stats Bar -->
-    <div class="max-w-6xl mx-auto px-4 py-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="stat-card glass rounded-xl p-4 border border-white/10 hover:border-trump-gold/30">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">📊</span>
-                    <div>
-                        <div class="text-3xl font-bold gradient-text" id="totalTweets">--</div>
-                        <div class="text-sm text-gray-400">总推文数</div>
+    <!-- 主内容区 -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        
+        <!-- 统计面板 -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- 统计卡片 1 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                    <i class="fa-brands fa-twitter text-6xl text-blue-400"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-sm text-gray-400 font-medium mb-1">Total Posts</p>
+                    <h3 class="text-3xl font-bold text-white tracking-tight" id="totalTweets">--</h3>
+                    <div class="mt-2 flex items-center text-xs text-green-400">
+                        <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+                        <span>监控中</span>
                     </div>
                 </div>
             </div>
-            <div class="stat-card glass rounded-xl p-4 border border-white/10 hover:border-green-400/30">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">🟢</span>
-                    <div>
-                        <div class="text-3xl font-bold text-green-400" id="todayTweets">--</div>
-                        <div class="text-sm text-gray-400">今日更新</div>
-                    </div>
+
+            <!-- 统计卡片 2 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-calendar-day text-6xl text-green-400"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-sm text-gray-400 font-medium mb-1">Today</p>
+                    <h3 class="text-3xl font-bold text-white tracking-tight" id="todayTweets">--</h3>
+                    <p class="mt-2 text-xs text-gray-500">今日新增</p>
                 </div>
             </div>
-            <div class="stat-card glass rounded-xl p-4 border border-white/10 hover:border-blue-400/30">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">⏰</span>
-                    <div>
-                        <div class="text-3xl font-bold text-blue-400" id="lastUpdate">--</div>
-                        <div class="text-sm text-gray-400">最后更新</div>
-                    </div>
+
+            <!-- 统计卡片 3 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-clock text-6xl text-trump-gold"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-sm text-gray-400 font-medium mb-1">Last Update</p>
+                    <h3 class="text-2xl font-bold text-white tracking-tight mt-1" id="lastUpdate">--:--</h3>
+                    <p class="mt-2 text-xs text-gray-500">自动同步</p>
                 </div>
             </div>
-            <div class="stat-card glass rounded-xl p-4 border border-white/10 hover:border-purple-400/30">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl">📡</span>
-                    <div>
-                        <div class="text-3xl font-bold text-purple-400" id="sourceCount">1</div>
-                        <div class="text-sm text-gray-400">数据源</div>
+
+            <!-- 统计卡片 4 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-rss text-6xl text-trump-red"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-sm text-gray-400 font-medium mb-1">Source</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="px-2 py-1 rounded-md bg-white/10 text-xs font-mono text-trump-gold border border-trump-gold/20">RSS</span>
+                        <span class="text-sm text-gray-400">Stable</span>
                     </div>
+                    <p class="mt-3 text-xs text-gray-500">Truth Social Archive</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 pb-12">
-        <!-- Loading State -->
-        <div id="loading" class="space-y-4">
-            <div class="glass rounded-2xl p-6 border border-white/10 shimmer h-48"></div>
-            <div class="glass rounded-2xl p-6 border border-white/10 shimmer h-48"></div>
-            <div class="glass rounded-2xl p-6 border border-white/10 shimmer h-48"></div>
-        </div>
+        <!-- 内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧：推文列表 (占2列) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-trump-red"></i> 最新动态
+                    </h2>
+                    <div class="flex gap-2 text-sm">
+                        <button class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-xs text-gray-300">全部</button>
+                        <button class="px-3 py-1 rounded-full hover:bg-white/10 transition-colors text-xs text-gray-500">仅原创</button>
+                    </div>
+                </div>
 
-        <!-- Tweets Container -->
-        <div id="tweetsContainer" class="space-y-4 hidden"></div>
+                <!-- Loading State -->
+                <div id="loading" class="space-y-4">
+                    <!-- 骨架屏 1 -->
+                    <div class="glass-card rounded-2xl p-6 shimmer relative overflow-hidden h-48"></div>
+                    <div class="glass-card rounded-2xl p-6 shimmer relative overflow-hidden h-48"></div>
+                    <div class="glass-card rounded-2xl p-6 shimmer relative overflow-hidden h-48"></div>
+                </div>
 
-        <!-- Error State -->
-        <div id="errorState" class="hidden text-center py-12">
-            <div class="text-6xl mb-4">😕</div>
-            <h3 class="text-xl font-semibold mb-2">加载失败</h3>
-            <p class="text-gray-400 mb-4">无法获取推文数据，请稍后重试</p>
-            <button onclick="refreshTweets()" class="btn-hover px-6 py-2 bg-gradient-to-r from-trump-blue to-blue-600 rounded-lg transition-all duration-300 shadow-lg">重新加载</button>
+                <!-- Tweets List -->
+                <div id="tweetsContainer" class="space-y-5 hidden"></div>
+                
+                <!-- Error State -->
+                <div id="errorState" class="hidden text-center py-20 glass-card rounded-2xl">
+                    <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">加载失败</h3>
+                    <p class="text-gray-400 mb-6">网络连接可能不稳定，请检查后重试</p>
+                    <button onclick="refreshTweets()" class="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-sm transition-all">
+                        重试加载
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：信息栏 (占1列) -->
+            <div class="space-y-6">
+                <!-- 作者卡片 -->
+                <div class="glass-card rounded-2xl p-6 text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-b from-trump-blue/20 to-transparent pointer-events-none"></div>
+                    <div class="relative w-24 h-24 mx-auto mb-4 rounded-full p-1 bg-gradient-to-br from-trump-gold to-orange-500 shadow-xl">
+                        <img src="https://github.com/1837620622.png" alt="Avatar" class="w-full h-full rounded-full object-cover border-4 border-[#0A0E17]" onerror="this.src='https://ui-avatars.com/api/?name=KK&background=random'">
+                    </div>
+                    <h3 class="text-xl font-bold text-white">万能程序员 <span class="text-trump-gold">传康KK</span></h3>
+                    <p class="text-sm text-gray-400 mt-1 mb-4">全栈开发者 / AI 爱好者</p>
+                    
+                    <div class="flex justify-center gap-3 mb-6">
+                        <a href="https://github.com/1837620622" target="_blank" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-gray-300 hover:text-white">
+                            <i class="fa-brands fa-github text-xl"></i>
+                        </a>
+                        <div class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-green-400 cursor-pointer group relative">
+                            <i class="fa-brands fa-weixin text-xl"></i>
+                            <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">1837620622</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                        <div class="flex items-center justify-center gap-2 text-trump-gold mb-2">
+                            <i class="fa-solid fa-crown"></i>
+                            <span class="font-bold text-sm">订阅推送</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-3">扫码加入 PushPlus 群组，实时接收最新动态通知</p>
+                        <div class="bg-white p-2 rounded-lg inline-block shadow-lg">
+                            <img src="https://raw.githubusercontent.com/1837620622/trump/main/assets/qrcode.png" alt="QR Code" class="w-32 h-32 object-contain" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.pushplus.plus/push?topic=trump'">
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2">有效期 30 天 · 自动更新</p>
+                    </div>
+                </div>
+
+                <!-- 关于项目 -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h4 class="font-bold text-gray-200 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-400"></i> 关于项目
+                    </h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                            <span>基于 Cloudflare Workers 构建，全球边缘加速</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                            <span>实时抓取 Truth Social 归档 RSS 数据源</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                            <span>MyMemory API 自动翻译中文</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </main>
 
-    <!-- Join Group Section -->
-    <section class="max-w-6xl mx-auto px-4 py-12">
-        <div class="glass rounded-2xl p-8 border border-white/10 text-center">
-            <h2 class="text-2xl font-bold mb-4">📱 加入订阅群组</h2>
-            <p class="text-gray-400 mb-6">扫描二维码加入PushPlus订阅群组，实时接收特朗普推文通知</p>
-            
-            <div class="inline-block bg-white p-4 rounded-xl mb-6 shadow-lg">
-                <img src="https://raw.githubusercontent.com/1837620622/trump/main/assets/qrcode.png" alt="群组二维码" class="w-48 h-48 object-contain" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=https://www.pushplus.plus/push?topic=trump'">
-            </div>
-            
-            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 max-w-md mx-auto">
-                <p class="text-yellow-400 font-medium">💡 使用指南</p>
-                <p class="text-gray-400 text-sm mt-2">关注PushPlus公众号，发送 trump 加入群组</p>
-                <p class="text-white mt-2">
-                    <span class="text-trump-gold">传康KK</span> | 
-                    微信：<span class="text-blue-400">1837620622</span>
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Watermark -->
-    <div class="watermark fixed bottom-4 right-4 glass-strong rounded-xl px-5 py-3 border border-trump-gold/30 text-sm z-40 shadow-lg glow-gold">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">🚀</span>
-            <div>
-                <span class="gradient-text font-bold">万能程序员</span>
-                <span class="text-white/60"> · </span>
-                <span class="text-blue-400 font-semibold">传康KK</span>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
-    <footer class="border-t border-white/10 py-8 mt-12">
-        <div class="max-w-6xl mx-auto px-4 text-center text-gray-500 text-sm">
-            <p>🚀 <span class="text-trump-gold">万能程序员 传康KK</span> 出品 | Powered by Cloudflare Workers</p>
-            <p class="mt-2">© 2026 Trump Tweet Monitor. All rights reserved.</p>
-            <p class="mt-2">微信：<span class="text-blue-400">1837620622</span> | GitHub: <a href="https://github.com/1837620622/trump" class="text-blue-400 hover:underline">1837620622/trump</a></p>
+    <footer class="border-t border-white/5 bg-black/20 py-8 text-center text-sm text-gray-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="mb-2">Made with <i class="fa-solid fa-heart text-red-500 animate-pulse"></i> by <span class="text-gray-300">ChuankangKK</span></p>
+            <p class="text-xs text-gray-600">
+                Data provided by trumpstruth.org · Powered by Cloudflare
+            </p>
+            <p class="text-xs text-gray-600 mt-1">
+                © 2026 Trump Tweet Monitor. Not affiliated with Truth Social or Donald Trump.
+            </p>
         </div>
     </footer>
 
+    <!-- JS 逻辑 -->
     <script>
         // 配置 - 使用当前域名的API
         const API_BASE = window.location.origin;
+        // const API_BASE = 'http://localhost:8787'; // 本地调试用
+        
         const TRANSLATE_API = 'https://api.mymemory.translated.net/get';
-
-        // 翻译缓存
         const translateCache = new Map();
 
         // 翻译函数
@@ -318,51 +346,88 @@
             if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
             if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`;
             
-            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        // 创建推文卡片
+        // 生成推文卡片HTML
         async function createTweetCard(item, index) {
             const translated = await translateText(item.title);
             const timeAgo = formatTime(item.pubDate);
+            const delay = Math.min(index * 100, 1000); // 动画延迟
             
             return `
-                <article class="tweet-card glass rounded-2xl p-6 border border-white/10" style="animation: fadeIn 0.5s ease ${index * 0.1}s both">
+                <article class="glass-card rounded-2xl p-6 fade-in-up hover:border-trump-blue/30 transition-all duration-300" style="animation-delay: ${delay}ms">
                     <div class="flex gap-4">
+                        <!-- 头像列 -->
                         <div class="flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-trump-red to-trump-blue flex items-center justify-center text-xl">🐦</div>
+                            <div class="w-12 h-12 rounded-full border-2 border-trump-gold/50 p-0.5 shadow-lg bg-white overflow-hidden relative group">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg" alt="Trump" class="w-full h-full rounded-full object-cover">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                            </div>
                         </div>
+
+                        <!-- 内容列 -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="font-semibold">${item.creator || '@TrumpDailyPosts'}</span>
-                                <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                                <span class="text-gray-500 text-sm">· ${timeAgo}</span>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <p class="text-gray-200 leading-relaxed">${item.title}</p>
-                            </div>
-                            
-                            <div class="bg-white/5 rounded-lg p-3 mb-3 border-l-4 border-trump-gold">
-                                <div class="flex items-center gap-2 text-trump-gold text-sm mb-1">
-                                    <span>🇨🇳</span>
-                                    <span>中文翻译</span>
+                            <!-- 头部信息 -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white text-lg leading-none">${item.creator || 'Donald J. Trump'}</span>
+                                    <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>
+                                    <span class="text-gray-500 text-sm">@realDonaldTrump</span>
                                 </div>
-                                <p class="text-gray-300">${translated}</p>
+                                <div class="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-full border border-white/5">
+                                    <i class="fa-regular fa-clock mr-1"></i>${timeAgo}
+                                </div>
                             </div>
                             
+                            <!-- 翻译内容 (突出显示) -->
+                            <div class="relative bg-gradient-to-r from-blue-900/20 to-transparent rounded-xl p-4 mb-4 border-l-4 border-trump-gold">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs font-bold text-trump-gold uppercase tracking-wider bg-trump-gold/10 px-2 py-0.5 rounded">Chinese</span>
+                                </div>
+                                <p class="text-gray-100 text-base leading-relaxed font-sans">${translated}</p>
+                            </div>
+
+                            <!-- 原文内容 -->
+                            <div class="mb-4 pl-4 border-l-2 border-white/10">
+                                <p class="text-gray-400 text-sm leading-relaxed italic font-serif">"${item.title}"</p>
+                            </div>
+                            
+                            <!-- 媒体内容 -->
                             ${item.mediaUrl ? `
-                                <div class="rounded-xl overflow-hidden mb-3">
-                                    <img src="${item.mediaUrl}" alt="Tweet media" class="w-full max-h-80 object-cover" loading="lazy" onerror="this.style.display='none'">
+                                <div class="rounded-xl overflow-hidden mb-4 border border-white/10 shadow-lg group cursor-pointer relative">
+                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <i class="fa-solid fa-expand text-white drop-shadow-lg text-3xl transform scale-75 group-hover:scale-100 transition-transform duration-300"></i>
+                                    </div>
+                                    <img src="${item.mediaUrl}" alt="Tweet Media" class="w-full max-h-96 object-cover bg-gray-800 transition-transform duration-700 group-hover:scale-105" loading="lazy">
                                 </div>
                             ` : ''}
                             
-                            <div class="flex items-center justify-between text-gray-500">
-                                <a href="${item.link}" target="_blank" class="flex items-center gap-2 hover:text-blue-400 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                    查看原文
+                            <!-- 底部操作栏 -->
+                            <div class="flex items-center justify-between pt-4 border-t border-white/5 text-gray-500 text-sm">
+                                <div class="flex gap-6">
+                                    <button class="flex items-center gap-2 hover:text-red-400 transition-colors group">
+                                        <div class="p-2 rounded-full group-hover:bg-red-500/10 transition-colors">
+                                            <i class="fa-regular fa-heart group-hover:scale-110 transition-transform"></i>
+                                        </div>
+                                        <span class="text-xs">Like</span>
+                                    </button>
+                                    <button class="flex items-center gap-2 hover:text-green-400 transition-colors group">
+                                        <div class="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+                                            <i class="fa-solid fa-retweet group-hover:scale-110 transition-transform"></i>
+                                        </div>
+                                        <span class="text-xs">Retruth</span>
+                                    </button>
+                                    <button class="flex items-center gap-2 hover:text-blue-400 transition-colors group">
+                                        <div class="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                                            <i class="fa-solid fa-share-nodes group-hover:scale-110 transition-transform"></i>
+                                        </div>
+                                        <span class="text-xs">Share</span>
+                                    </button>
+                                </div>
+                                <a href="${item.link}" target="_blank" class="flex items-center gap-1 text-trump-blue hover:text-blue-400 transition-colors font-medium text-xs bg-trump-blue/10 px-3 py-1.5 rounded-full hover:bg-trump-blue/20">
+                                    Source <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
                                 </a>
-                                <span class="text-xs">${new Date(item.pubDate).toLocaleString('zh-CN')}</span>
                             </div>
                         </div>
                     </div>
@@ -370,7 +435,7 @@
             `;
         }
 
-        // 获取并显示推文
+        // 刷新推文
         async function refreshTweets() {
             const loading = document.getElementById('loading');
             const container = document.getElementById('tweetsContainer');
@@ -381,9 +446,9 @@
             errorState.classList.add('hidden');
             
             try {
-                // 从API获取推文数据
+                // 请求API
                 const response = await fetch(`${API_BASE}/api/tweets`);
-                if (!response.ok) throw new Error('API请求失败');
+                if (!response.ok) throw new Error('API Error');
                 
                 const data = await response.json();
                 const items = data.items || [];
@@ -394,31 +459,59 @@
                     return;
                 }
                 
-                // 更新统计
-                document.getElementById('totalTweets').textContent = data.count;
+                // 更新统计数据 (带简单数字增长动画)
+                animateValue('totalTweets', parseInt(document.getElementById('totalTweets').innerText) || 0, data.count, 1000);
+                
                 const today = new Date().toDateString();
                 const todayCount = items.filter(item => new Date(item.pubDate).toDateString() === today).length;
-                document.getElementById('todayTweets').textContent = todayCount;
+                animateValue('todayTweets', parseInt(document.getElementById('todayTweets').innerText) || 0, todayCount, 1000);
+                
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
                 
-                // 渲染推文（显示前20条）
+                // 渲染列表 (取前20条)
                 const displayItems = items.slice(0, 20);
-                const cards = await Promise.all(displayItems.map((item, i) => createTweetCard(item, i)));
+                const cardsHTML = await Promise.all(displayItems.map((item, i) => createTweetCard(item, i)));
                 
-                container.innerHTML = cards.join('');
+                container.innerHTML = cardsHTML.join('');
                 loading.classList.add('hidden');
                 container.classList.remove('hidden');
+                
             } catch (e) {
-                console.error('获取推文失败:', e);
+                console.error('Fetch error:', e);
                 loading.classList.add('hidden');
                 errorState.classList.remove('hidden');
             }
         }
 
-        // 页面加载时获取推文
+        // 数字增长动画辅助函数
+        function animateValue(id, start, end, duration) {
+            if (isNaN(start)) start = 0;
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            
+            // 如果差异太大，直接显示结果，避免卡顿
+            if (stepTime < 10) {
+                obj.innerHTML = end;
+                return;
+            }
+            
+            const timer = setInterval(function() {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // 初始化
         document.addEventListener('DOMContentLoaded', refreshTweets);
         
-        // 每分钟自动刷新
+        // 自动轮询
         setInterval(refreshTweets, 60000);
     </script>
 </body>
