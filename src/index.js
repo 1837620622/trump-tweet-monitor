@@ -304,7 +304,11 @@ async function checkNewTweets(env) {
     
     // 将所有新发现的ID都加入已推送列表，防止积压推送
     // 既然用户只想要最新的，那么旧的就跳过
-    for (const item of newItems) {
+    // 优化：确保按时间顺序（旧->新）添加到列表尾部，这样 slice(-100) 就会保留最新的
+    // newItems 是按时间倒序（新->旧）的，所以需要反转
+    const sortedNewItems = [...newItems].reverse();
+    
+    for (const item of sortedNewItems) {
       if (!lastPushedIds.includes(item.guid)) {
         lastPushedIds.push(item.guid);
       }
