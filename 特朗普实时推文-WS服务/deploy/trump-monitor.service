@@ -1,0 +1,31 @@
+[Unit]
+Description=Trump Truth Social WebSocket service (self-hosted, private)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trumpws
+Group=trumpws
+WorkingDirectory=/opt/trump-truth-ws
+EnvironmentFile=/opt/trump-truth-ws/.env
+ExecStart=/usr/bin/node /opt/trump-truth-ws/server/index.js
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# 防雪崩：60 秒内最多 5 次重启失败就停下，避免占满日志
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# 安全收紧
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/trump-truth-ws/data
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

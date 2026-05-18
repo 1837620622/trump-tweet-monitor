@@ -3,8 +3,10 @@
 // 运行方式: node test-worker.js
 // ============================================================
 
+// !! 注意：旧版本曾在此处硬编码 PUSHPLUS_TOKEN，已被泄漏到 git 历史。
+// !! 你应当在 pushplus.plus 后台立即重置 token。新代码统一从环境变量读取。
 const CONFIG = {
-  PUSHPLUS_TOKEN: '7dba765a07dc482487fefdc88cdd7e11',
+  PUSHPLUS_TOKEN: process.env.PUSHPLUS_TOKEN || '',
   PUSHPLUS_TOPIC: 'trump',
   PUSHPLUS_API: 'http://www.pushplus.plus/send',
   RSS_URLS: [

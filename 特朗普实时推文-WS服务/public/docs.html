@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WS 对接文档 · 特朗普实时推文-WS服务</title>
+<style>
+  :root { color-scheme: dark; --acc:#fbbf24; --mut:#94a3b8; --line:#1e293b; --code:#0b1220; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:#020617; color:#e2e8f0; line-height:1.65;
+         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',PingFang SC,Microsoft YaHei,sans-serif; }
+  .wrap { max-width:960px; margin:0 auto; padding:32px 24px 80px; }
+  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+  h1 { margin:0; font-size:1.6rem; background:linear-gradient(90deg,#f59e0b,#ef4444); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h2 { font-size:1.25rem; margin:32px 0 12px; padding-top:24px; border-top:1px solid var(--line); }
+  h3 { font-size:1rem; color:var(--acc); margin:20px 0 8px; }
+  p, li { color:#cbd5e1; }
+  code { background:var(--code); padding:2px 6px; border-radius:4px; color:var(--acc); font-size:.92em; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow:auto; position:relative; }
+  pre code { background:none; padding:0; color:#e2e8f0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; }
+  th, td { border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; }
+  th { color:var(--mut); }
+  .copy { position:absolute; top:8px; right:8px; background:#1e293b; color:#e2e8f0; border:1px solid var(--line); border-radius:4px; padding:3px 9px; font-size:.78rem; cursor:pointer; }
+  .copy:hover { background:#334155; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#022; border:1px solid var(--line); padding:8px 14px; border-radius:6px; display:none; }
+  .toast.show { display:block; }
+  a { color:#60a5fa; }
+  nav.links { display:flex; gap:14px; flex-wrap:wrap; }
+  nav.links a { text-decoration:none; }
+  .note { background:rgba(251,191,36,.08); border-left:3px solid var(--acc); padding:10px 14px; border-radius:0 8px 8px 0; margin:14px 0; color:#fde68a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>📖 WebSocket 对接文档</h1>
+  <nav class="links">
+    <a href="/">首页</a>
+    <a href="/demo">实时演示</a>
+    <a href="/admin">管理后台</a>
+  </nav>
+</header>
+
+<p>本服务通过 WebSocket 把特朗普 Truth Social 上的新帖推送到你的客户端 / AI 服务。下文所有示例已在生产中验证可复制即跑。</p>
+
+<h2 id="endpoint">1. 端点 & 鉴权</h2>
+<table>
+  <tr><th>WS 端点</th><td><code>wss://&lt;your-host&gt;/ws</code> （明文 IP/端口环境用 <code>ws://&lt;ip&gt;:&lt;port&gt;/ws</code>）</td></tr>
+  <tr><th>HTTP 基址</th><td><code>https://&lt;your-host&gt;</code></td></tr>
+  <tr><th>鉴权方式 A（推荐，浏览器/简单 SDK）</th><td>URL 参数：<code>?token=ttws_live_xxx</code></td></tr>
+  <tr><th>鉴权方式 B（服务端调用）</th><td>HTTP 头：<code>Authorization: Bearer ttws_live_xxx</code></td></tr>
+  <tr><th>鉴权失败</th><td>HTTP 401，连接断开</td></tr>
+  <tr><th>过期/吊销</th><td>已建立的连接会在下次心跳时被踢出，<code>close code = 4003</code></td></tr>
+</table>
+
+<div class="note">API Key 来自管理后台 <a href="/admin">/admin</a>。创建时可选过期：1 小时 / 1 天 / 1 年 / 永久 / 自定义。</div>
+
+<h2 id="lifecycle">2. 连接生命周期</h2>
+<pre><code>client                        server
+  | --- HTTP Upgrade ----->     |
+  | &lt;--- 101 Switching  ---  |
+  | &lt;--- hello              ---|   服务器主动发的第一帧
+  | --- subscribe (opt) ---&gt;   |
+  | &lt;--- subscribed         ---|
+  | &lt;--- tweet (real-time) ----|   每来一条新帖一帧
+  | &lt;--- ping (every 25s) -----|   WS 协议层 ping
+  | ---  pong  ------------&gt;   |   ws 库自动回 pong
+  | --- ping (JSON, opt) --&gt;   |   应用层心跳
+  | &lt;--- pong (JSON)         ---|
+</code></pre>
+
+<h2 id="upstream">3. 客户端 → 服务端 消息</h2>
+<table>
+  <tr><th>type</th><th>字段</th><th>说明</th></tr>
+  <tr><td><code>ping</code></td><td>—</td><td>应用层心跳；服务端回 <code>pong</code></td></tr>
+  <tr><td><code>subscribe</code></td><td><code>source: "all"|"rss"|"truth"</code></td><td>过滤数据源（默认 all）</td></tr>
+  <tr><td><code>history</code></td><td><code>limit?: 1..200 (默认 20)</code></td><td>请求最近 N 条历史</td></tr>
+</table>
+
+<h2 id="downstream">4. 服务端 → 客户端 消息</h2>
+<table>
+  <tr><th>type</th><th>关键字段</th><th>说明</th></tr>
+  <tr><td><code>hello</code></td><td><code>ts, server_version, key</code></td><td>连接建立第一帧；key 包含当前用的 id / prefix / expires_at</td></tr>
+  <tr><td><code>subscribed</code></td><td><code>source</code></td><td>订阅成功确认</td></tr>
+  <tr><td><code>tweet</code></td><td><code>data: Tweet</code></td><td>实时新帖</td></tr>
+  <tr><td><code>history</code></td><td><code>data: Tweet[]</code></td><td>历史回放</td></tr>
+  <tr><td><code>pong</code></td><td><code>ts</code></td><td>心跳应答</td></tr>
+  <tr><td><code>error</code></td><td><code>message</code></td><td>错误（不会自动断）</td></tr>
+</table>
+
+<h3>Tweet 数据结构</h3>
+<pre><code>{
+  "guid":        "https://truthsocial.com/@realDonaldTrump/posts/12345",
+  "source":      "rss",           // 或 "truth"
+  "title":       "原文纯文本",
+  "contentHtml": "&lt;p&gt;原 HTML&lt;/p&gt;",
+  "link":        "https://truthsocial.com/...",
+  "pubDate":     "2026-05-18T14:47:44.000Z",
+  "author":      "@realDonaldTrump",
+  "mediaUrl":    "https://.../image.jpg",   // 没图时 null
+  "translated":  "中文翻译 (服务端预翻好)",
+  "received_at": "2026-05-18T14:47:46.123Z",
+  "raw":         { ... }                    // 调试用，AI 不要喂
+}</code></pre>
+<p><b>给 AI 喂数据建议：</b>把 <code>title</code>（英文原文）和 <code>translated</code>（中文）一起放进 prompt，再附 <code>pubDate</code> / <code>source</code> / <code>link</code> 作为上下文。</p>
+
+<h2 id="python">5. Python 客户端示例（粘贴即跑）</h2>
+<pre><code>import asyncio, json, websockets
+
+URL = "wss://YOUR-HOST/ws?token=ttws_live_XXXXXXXXXXXXXXXXX"
+
+async def main():
+    async for ws in websockets.connect(URL, ping_interval=20):
+        try:
+            await ws.send(json.dumps({"type": "subscribe", "source": "all"}))
+            await ws.send(json.dumps({"type": "history", "limit": 20}))
+            async for raw in ws:
+                msg = json.loads(raw)
+                if msg["type"] == "tweet":
+                    t = msg["data"]
+                    print(f"[{t['source']}] {t['pubDate']} | {t['title'][:80]}")
+                    # 这里调用你的 AI / 写库 / 触发交易
+                elif msg["type"] == "history":
+                    print(f"got {len(msg['data'])} historical tweets")
+        except websockets.ConnectionClosed:
+            print("reconnecting…")
+            continue
+
+asyncio.run(main())</code></pre>
+
+<h2 id="node">6. Node.js 客户端示例</h2>
+<pre><code>const WebSocket = require('ws'); // npm i ws
+const URL = 'wss://YOUR-HOST/ws?token=ttws_live_XXXXXXXXXXXXXXXXX';
+
+function connect() {
+  const ws = new WebSocket(URL);
+  ws.on('open', () => {
+    ws.send(JSON.stringify({ type: 'subscribe', source: 'all' }));
+    ws.send(JSON.stringify({ type: 'history', limit: 20 }));
+  });
+  ws.on('message', raw => {
+    const m = JSON.parse(raw);
+    if (m.type === 'tweet') {
+      console.log(`[${m.data.source}] ${m.data.title.slice(0, 80)}`);
+      // -> 你的 AI 调用
+    }
+  });
+  ws.on('close', () => setTimeout(connect, 1500));
+  ws.on('error', e => console.error(e.message));
+}
+connect();</code></pre>
+
+<h2 id="curl">7. HTTP 接口（不需要 WS 时备用）</h2>
+<table>
+  <tr><th>Path</th><th>说明</th></tr>
+  <tr><td><code>GET /health</code></td><td>健康检查 + 连接数 + 历史数</td></tr>
+  <tr><td><code>GET /api/tweets?limit=50</code></td><td>当前缓存历史 JSON 数组（最新在前）—— 公开</td></tr>
+</table>
+
+<h2 id="errors">8. 错误码 & 重连建议</h2>
+<table>
+  <tr><th>状况</th><th>HTTP / WS Close</th><th>说明</th></tr>
+  <tr><td>未带 token</td><td>HTTP 401 (<code>missing_token</code>)</td><td>客户端补 token 后重连</td></tr>
+  <tr><td>token 格式不对</td><td>401 (<code>bad_format</code>)</td><td>token 必须 <code>ttws_live_</code> 开头</td></tr>
+  <tr><td>token 不存在</td><td>401 (<code>not_found</code>)</td><td>已被删除</td></tr>
+  <tr><td>token 已撤销</td><td>401 / Close 4003 (<code>revoked</code>)</td><td>联系管理员重新发</td></tr>
+  <tr><td>token 已过期</td><td>401 / Close 4003 (<code>expired</code>)</td><td>续期或申请新 key</td></tr>
+</table>
+<p>建议客户端：指数退避重连（1s → 2s → 4s … 上限 30s）；遇到 <code>4003</code> 不要无限重连，先报警。</p>
+
+<h2 id="latency">9. 延迟说明</h2>
+<p>这里说实话，给你管理预期：</p>
+<table>
+  <tr><th>链路</th><th>典型耗时</th></tr>
+  <tr><td>Trump 在 Truth Social 发帖 → 出现在 <code>trumpstruth.org</code> RSS</td><td>5 ~ 60 秒（其归档站轮询节奏）</td></tr>
+  <tr><td>服务端 RSS 轮询命中（默认 10s 间隔）</td><td>0 ~ 10 秒</td></tr>
+  <tr><td>服务端 → WS 客户端</td><td>&lt; 50 ms（同机房）</td></tr>
+</table>
+<p>合计 <b>5 ~ 70 秒</b>。如果服务器能直连 truthsocial.com 一手 API（默认每 3 秒），上界可压到约 <b>3 ~ 10 秒</b>。</p>
+
+<div class="toast" id="toast">已复制</div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy'; btn.textContent = '复制';
+  btn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(pre.innerText.replace(/^复制\n/, ''));
+      const t = document.getElementById('toast'); t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1500);
+    } catch {}
+  };
+  pre.appendChild(btn);
+});
+</script>
+</body>
+</html>

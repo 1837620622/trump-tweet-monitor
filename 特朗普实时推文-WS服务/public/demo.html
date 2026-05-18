@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实时演示 · 特朗普实时推文-WS服务</title>
+<style>
+  :root { color-scheme: dark; --acc:#fbbf24; --mut:#94a3b8; --line:#1e293b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:radial-gradient(at top left,#1e293b,#020617); color:#e2e8f0; min-height:100vh;
+         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',PingFang SC,Microsoft YaHei,sans-serif; }
+  header { padding:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+           border-bottom:1px solid var(--line); background:rgba(2,6,23,.6); position:sticky; top:0; backdrop-filter:blur(10px); z-index:10; }
+  header h1 { margin:0; font-size:1.2rem; }
+  header .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  header input { background:#0b1220; color:#e2e8f0; border:1px solid var(--line); border-radius:6px; padding:6px 10px; min-width:280px; }
+  header button { background:linear-gradient(90deg,#f59e0b,#ef4444); border:0; color:#0b0b0b; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
+  header .status { padding:4px 10px; border-radius:999px; font-size:.85rem; font-weight:600; background:#1e293b; color:var(--mut); }
+  header .status.connected { background:rgba(34,197,94,.2); color:#22c55e; }
+  header .status.error { background:rgba(239,68,68,.2); color:#ef4444; }
+  main { max-width:920px; margin:0 auto; padding:24px; }
+  .item { background:rgba(15,23,42,.6); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px; animation: in .35s ease-out; }
+  @keyframes in { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  .meta { color:var(--mut); font-size:.85rem; margin-bottom:8px; display:flex; gap:12px; flex-wrap:wrap; }
+  .meta b { color:var(--acc); }
+  .title { white-space:pre-wrap; line-height:1.55; margin-bottom:8px; }
+  .tr { color:#7dd3fc; border-left:3px solid #38bdf8; padding-left:10px; white-space:pre-wrap; }
+  .empty { text-align:center; color:var(--mut); padding:60px 0; }
+  a.src { color:#60a5fa; text-decoration:none; font-size:.85rem; }
+  a.src:hover { text-decoration:underline; }
+  details { margin-top:8px; color:var(--mut); font-size:.85rem; }
+  details pre { background:#020617; padding:10px; border-radius:6px; overflow:auto; max-height:300px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📡 实时 WS 演示</h1>
+  <div class="controls">
+    <span class="status" id="status">未连接</span>
+    <input id="token" placeholder="粘贴你的 ttws_live_… 测试 key" autocomplete="off" />
+    <button id="btn">连接</button>
+  </div>
+</header>
+<main>
+  <div id="list"><div class="empty">输入一个 API Key 后点连接，等新帖。<br/>没有 key？去 <a class="src" href="/admin">/admin</a> 生成一个。</div></div>
+</main>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+let ws = null, items = [];
+const MAX = 50;
+
+function setStatus(text, cls) {
+  $('status').textContent = text;
+  $('status').className = 'status ' + (cls || '');
+}
+
+function render() {
+  if (items.length === 0) {
+    $('list').innerHTML = '<div class="empty">连接成功，等待新推文…</div>'; return;
+  }
+  $('list').innerHTML = items.map(t => {
+    const time = new Date(t.received_at || t.pubDate).toLocaleString('zh-CN', { hour12: false });
+    return `<article class="item">
+      <div class="meta">
+        <span><b>${escape(t.source || '?')}</b></span>
+        <span>${time}</span>
+        <span>${escape(t.author || '')}</span>
+        ${t.link ? `<a class="src" href="${escape(t.link)}" target="_blank" rel="noopener">查看原文 ↗</a>` : ''}
+      </div>
+      <div class="title">${escape(t.title || '')}</div>
+      ${t.translated ? `<div class="tr">${escape(t.translated)}</div>` : ''}
+      ${t.mediaUrl ? `<p><img src="${escape(t.mediaUrl)}" style="max-width:100%; border-radius:8px; margin-top:8px;" /></p>` : ''}
+      <details><summary>JSON</summary><pre>${escape(JSON.stringify(t, null, 2))}</pre></details>
+    </article>`;
+  }).join('');
+}
+
+function escape(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function connect() {
+  const tok = $('token').value.trim();
+  if (!tok) { alert('请先填 API Key'); return; }
+  if (ws) { try { ws.close(); } catch {} ws = null; }
+  setStatus('连接中…');
+  const u = new URL('/ws', location.href);
+  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+  u.searchParams.set('token', tok);
+  ws = new WebSocket(u.toString());
+  ws.onopen = () => {
+    setStatus('已连接', 'connected');
+    ws.send(JSON.stringify({ type: 'subscribe', source: 'all' }));
+    ws.send(JSON.stringify({ type: 'history', limit: 20 }));
+  };
+  ws.onmessage = (ev) => {
+    let m; try { m = JSON.parse(ev.data); } catch { return; }
+    if (m.type === 'tweet') {
+      items.unshift(m.data); items = items.slice(0, MAX); render();
+    } else if (m.type === 'history') {
+      items = m.data.slice(0, MAX); render();
+    }
+  };
+  ws.onerror = () => setStatus('连接错误', 'error');
+  ws.onclose = (e) => setStatus(e.wasClean ? '已断开' : `断开 (${e.code} ${e.reason || ''})`, 'error');
+}
+
+$('btn').onclick = connect;
+$('token').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+
+// URL 上带 token 自动连
+const urlTok = new URLSearchParams(location.search).get('token');
+if (urlTok) { $('token').value = urlTok; connect(); }
+</script>
+</body>
+</html>

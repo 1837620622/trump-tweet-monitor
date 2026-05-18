@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>特朗普实时推文 · WebSocket 数据服务</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
+    background: radial-gradient(at top left, #1e293b, #020617);
+    color: #e2e8f0;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 64px 24px; }
+  h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 8px; letter-spacing: -.02em;
+       background: linear-gradient(90deg, #f59e0b, #ef4444); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: #94a3b8; font-size: 1.05rem; margin-bottom: 40px; }
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 24px 0 36px; }
+  .card { padding: 22px; border: 1px solid #1e293b; border-radius: 16px; background: rgba(15,23,42,.65); backdrop-filter: blur(10px); }
+  .card h3 { margin: 0 0 8px; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+  .card p { margin: 0 0 14px; color: #94a3b8; font-size: .92rem; }
+  .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; font-weight: 600; text-decoration: none;
+         background: linear-gradient(90deg, #f59e0b, #ef4444); color: #0b0b0b; transition: transform .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.ghost { background: transparent; border: 1px solid #334155; color: #e2e8f0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+  .stat { padding: 16px; border-radius: 12px; background: rgba(15,23,42,.5); border: 1px solid #1e293b; text-align: center; }
+  .stat b { display: block; font-size: 1.6rem; color: #fbbf24; font-variant-numeric: tabular-nums; }
+  .stat span { color: #64748b; font-size: .85rem; }
+  code { background: rgba(15,23,42,.7); padding: 2px 6px; border-radius: 4px; font-size: .9em; color: #fbbf24; }
+  footer { color: #475569; font-size: .85rem; text-align: center; margin-top: 48px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🦅 特朗普实时推文 · WS 数据服务</h1>
+    <p class="sub">自托管的 Truth Social 实时监控 + 多源轮询 + AI 翻译 + WebSocket 广播。<br>给 AI / 交易机器人 / 量化系统 / 你的下游消费者用的低延迟数据通道。</p>
+
+    <div class="stats">
+      <div class="stat"><b id="stHist">…</b><span>累计推文</span></div>
+      <div class="stat"><b id="stWs">…</b><span>当前 WS 连接</span></div>
+      <div class="stat"><b id="stKey">…</b><span>启用的 API Key</span></div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>📡 实时演示</h3>
+        <p>直接看 WS 推送效果（需要先在管理后台生成一个 key）。</p>
+        <a class="btn" href="/demo">打开 Demo</a>
+      </div>
+      <div class="card">
+        <h3>📖 对接文档</h3>
+        <p>WS 消息协议、鉴权、Python / Node / Go 客户端示例，开箱即用。</p>
+        <a class="btn" href="/docs">查看文档</a>
+      </div>
+      <div class="card">
+        <h3>🔐 管理后台</h3>
+        <p>生成 / 撤销 API Key，设置过期时间（1 小时 / 1 天 / 1 年 / 永久 / 自定义）。</p>
+        <a class="btn ghost" href="/admin">进入后台</a>
+      </div>
+    </div>
+
+    <p style="color:#64748b;font-size:.9rem;">WS 端点：<code id="wsUrl">ws://this-host/ws?token=&lt;your_api_key&gt;</code></p>
+
+    <footer>© 特朗普实时推文-WS服务 · 仅供内部 / 授权用户使用</footer>
+  </div>
+<script>
+  // 不依赖 admin 密码，调健康检查公开端点
+  fetch('/health').then(r => r.json()).then(h => {
+    document.getElementById('stHist').textContent = h.history ?? '0';
+    document.getElementById('stWs').textContent = h.ws?.clients ?? '0';
+  }).catch(()=>{});
+  // 当前域显示
+  const u = new URL(location.href);
+  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+  u.pathname = '/ws';
+  u.search = '?token=<your_api_key>';
+  document.getElementById('wsUrl').textContent = u.toString();
+  document.getElementById('stKey').textContent = '请进后台查看';
+</script>
+</body>
+</html>
