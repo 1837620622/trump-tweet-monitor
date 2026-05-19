@@ -3,46 +3,113 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WS 对接文档 · 特朗普实时推文-WS服务</title>
+<title>WS 对接文档 · 特朗普实时推文 WS 服务</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; --acc:#fbbf24; --mut:#94a3b8; --line:#1e293b; --code:#0b1220; }
+  :root {
+    color-scheme: dark;
+    --bg-0: #050816;
+    --surface: rgba(15, 23, 42, 0.6);
+    --line: rgba(148, 163, 184, 0.12);
+    --line-strong: rgba(148, 163, 184, 0.25);
+    --txt: #e2e8f0;
+    --txt-dim: #cbd5e1;
+    --mut: #94a3b8;
+    --gold: #fbbf24;
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #38bdf8;
+    --code-bg: rgba(2, 6, 23, 0.7);
+    --grad-primary: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+    --grad-text: linear-gradient(90deg, #fbbf24, #f97316, #ef4444);
+  }
   * { box-sizing: border-box; }
-  body { margin:0; min-height:100vh; background:#020617; color:#e2e8f0; line-height:1.65;
-         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',PingFang SC,Microsoft YaHei,sans-serif; }
-  .wrap { max-width:960px; margin:0 auto; padding:32px 24px 80px; }
-  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
-  h1 { margin:0; font-size:1.6rem; background:linear-gradient(90deg,#f59e0b,#ef4444); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  h2 { font-size:1.25rem; margin:32px 0 12px; padding-top:24px; border-top:1px solid var(--line); }
-  h3 { font-size:1rem; color:var(--acc); margin:20px 0 8px; }
-  p, li { color:#cbd5e1; }
-  code { background:var(--code); padding:2px 6px; border-radius:4px; color:var(--acc); font-size:.92em; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow:auto; position:relative; }
-  pre code { background:none; padding:0; color:#e2e8f0; }
-  table { border-collapse:collapse; width:100%; margin:10px 0; }
-  th, td { border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; }
-  th { color:var(--mut); }
-  .copy { position:absolute; top:8px; right:8px; background:#1e293b; color:#e2e8f0; border:1px solid var(--line); border-radius:4px; padding:3px 9px; font-size:.78rem; cursor:pointer; }
-  .copy:hover { background:#334155; }
-  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#022; border:1px solid var(--line); padding:8px 14px; border-radius:6px; display:none; }
-  .toast.show { display:block; }
-  a { color:#60a5fa; }
-  nav.links { display:flex; gap:14px; flex-wrap:wrap; }
-  nav.links a { text-decoration:none; }
-  .note { background:rgba(251,191,36,.08); border-left:3px solid var(--acc); padding:10px 14px; border-radius:0 8px 8px 0; margin:14px 0; color:#fde68a; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg-0);
+    background-image:
+      radial-gradient(at 10% -10%, rgba(251, 191, 36, 0.12) 0px, transparent 40%),
+      radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.10) 0px, transparent 40%);
+    color: var(--txt); line-height: 1.65;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* topbar */
+  .topbar { position: sticky; top: 0; z-index: 30;
+    backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    background: rgba(5, 8, 22, 0.72); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 1100px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; }
+  .brand .logo { width: 32px; height: 32px; border-radius: 9px; background: var(--grad-primary);
+    display: grid; place-items: center; box-shadow: 0 6px 20px -8px rgba(251, 191, 36, 0.6); color: #0b0b0b; font-size: 1.05rem; }
+  .brand .name { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .topbar nav { display: flex; gap: 4px; margin-left: 14px; }
+  .topbar nav a { color: var(--txt-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px;
+    font-size: .92rem; font-weight: 500; transition: all .15s; }
+  .topbar nav a:hover { background: rgba(148, 163, 184, 0.1); color: var(--txt); }
+  .topbar nav a.active { color: var(--gold); background: rgba(251, 191, 36, 0.1); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 28px 80px; }
+  .hero { margin-bottom: 28px; animation: fadeUp .55s ease-out; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .hero h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -.02em; display: flex; align-items: center; gap: 12px; }
+  .hero h1 .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+    background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.3); font-size: 1.4rem; }
+  .hero h1 .grad { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .sub { color: var(--mut); margin: 0; font-size: .98rem; max-width: 760px; }
+  h2 { font-size: 1.25rem; margin: 36px 0 14px; font-weight: 700; padding-top: 22px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ""; width: 4px; height: 20px; background: var(--grad-primary); border-radius: 4px; }
+  h3 { font-size: 1.02rem; color: var(--gold); margin: 22px 0 8px; font-weight: 600; }
+  p, li { color: var(--txt-dim); }
+  code { background: var(--code-bg); padding: 2px 8px; border-radius: 6px; color: var(--gold);
+    font-size: .88em; font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; border: 1px solid var(--line); }
+  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px; overflow: auto; position: relative;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: .88rem; line-height: 1.55; }
+  pre code { background: none; padding: 0; color: var(--txt); border: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    backdrop-filter: blur(12px); }
+  th, td { border-bottom: 1px solid var(--line); padding: 11px 14px; text-align: left; }
+  th { color: var(--mut); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; background: rgba(15, 23, 42, 0.5); }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: rgba(251, 191, 36, 0.03); }
+  .copy { position: absolute; top: 10px; right: 10px; background: rgba(251, 191, 36, 0.10); color: var(--gold);
+    border: 1px solid rgba(251, 191, 36, 0.28); border-radius: 7px; padding: 4px 10px; font-size: .78rem;
+    font-weight: 600; cursor: pointer; transition: background-color .15s; }
+  .copy:hover { background: rgba(251, 191, 36, 0.18); }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(15, 23, 42, 0.95); border: 1px solid var(--line-strong); color: var(--txt);
+    padding: 10px 18px; border-radius: 11px; font-size: .9rem; font-weight: 500;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 70; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  a { color: var(--blue); }
+  .note { background: rgba(251, 191, 36, .07); border: 1px solid rgba(251, 191, 36, .25);
+    border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; color: #fde68a; font-size: .9rem; }
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>📖 WebSocket 对接文档</h1>
-  <nav class="links">
-    <a href="/">首页</a>
-    <a href="/demo">实时演示</a>
-    <a href="/admin">管理后台</a>
-  </nav>
-</header>
 
-<p>本服务通过 WebSocket 把特朗普 Truth Social 上的新帖推送到你的客户端 / AI 服务。下文所有示例已在生产中验证可复制即跑。</p>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><div class="logo">🦅</div><span class="name">Trump WS</span></div>
+    <nav>
+      <a href="/">首页</a>
+      <a href="/demo">实时演示</a>
+      <a href="/docs" class="active">对接文档</a>
+      <a href="/admin">管理后台</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="hero">
+  <h1><span class="ico">📖</span> <span class="grad">WebSocket 对接文档</span></h1>
+  <p class="sub">通过 WebSocket 把特朗普 Truth Social 实时推文推送到你的客户端 / AI 服务。下文所有示例已在生产中验证，复制即跑。</p>
+</div>
 
 <h2 id="endpoint">1. 端点 & 鉴权</h2>
 <table>

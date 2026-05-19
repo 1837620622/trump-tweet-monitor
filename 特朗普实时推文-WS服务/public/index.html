@@ -4,81 +4,395 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>特朗普实时推文 · WebSocket 数据服务</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
-    background: radial-gradient(at top left, #1e293b, #020617);
-    color: #e2e8f0;
-    line-height: 1.6;
+  :root {
+    color-scheme: dark;
+    --bg-0: #050816;
+    --bg-1: #0b1226;
+    --surface: rgba(15, 23, 42, 0.6);
+    --line: rgba(148, 163, 184, 0.12);
+    --line-strong: rgba(148, 163, 184, 0.25);
+    --txt: #e2e8f0;
+    --txt-dim: #cbd5e1;
+    --mut: #94a3b8;
+    --gold: #fbbf24;
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #38bdf8;
+    --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
+    --grad-primary: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+    --grad-text: linear-gradient(90deg, #fbbf24, #f97316, #ef4444);
   }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 64px 24px; }
-  h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 8px; letter-spacing: -.02em;
-       background: linear-gradient(90deg, #f59e0b, #ef4444); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .sub { color: #94a3b8; font-size: 1.05rem; margin-bottom: 40px; }
-  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 24px 0 36px; }
-  .card { padding: 22px; border: 1px solid #1e293b; border-radius: 16px; background: rgba(15,23,42,.65); backdrop-filter: blur(10px); }
-  .card h3 { margin: 0 0 8px; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
-  .card p { margin: 0 0 14px; color: #94a3b8; font-size: .92rem; }
-  .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; font-weight: 600; text-decoration: none;
-         background: linear-gradient(90deg, #f59e0b, #ef4444); color: #0b0b0b; transition: transform .15s; }
-  .btn:hover { transform: translateY(-1px); }
-  .btn.ghost { background: transparent; border: 1px solid #334155; color: #e2e8f0; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
-  .stat { padding: 16px; border-radius: 12px; background: rgba(15,23,42,.5); border: 1px solid #1e293b; text-align: center; }
-  .stat b { display: block; font-size: 1.6rem; color: #fbbf24; font-variant-numeric: tabular-nums; }
-  .stat span { color: #64748b; font-size: .85rem; }
-  code { background: rgba(15,23,42,.7); padding: 2px 6px; border-radius: 4px; font-size: .9em; color: #fbbf24; }
-  footer { color: #475569; font-size: .85rem; text-align: center; margin-top: 48px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg-0);
+    background-image:
+      radial-gradient(at 10% -10%, rgba(251, 191, 36, 0.14) 0px, transparent 40%),
+      radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.12) 0px, transparent 40%),
+      radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.08) 0px, transparent 50%);
+    color: var(--txt);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* topbar */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    background: rgba(5, 8, 22, 0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 1240px; margin: 0 auto;
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em;
+  }
+  .brand .logo {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--grad-primary);
+    display: grid; place-items: center;
+    box-shadow: 0 6px 20px -8px rgba(251, 191, 36, 0.6);
+    color: #0b0b0b; font-size: 1.05rem;
+  }
+  .brand .name {
+    background: var(--grad-text);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .topbar nav { display: flex; gap: 4px; margin-left: 14px; }
+  .topbar nav a {
+    color: var(--txt-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px;
+    font-size: .92rem; font-weight: 500; transition: all .15s;
+  }
+  .topbar nav a:hover { background: rgba(148, 163, 184, 0.1); color: var(--txt); }
+  .topbar nav a.active { color: var(--gold); background: rgba(251, 191, 36, 0.1); }
+  .topbar .spacer { flex: 1; }
+  .topbar .health {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 11px; border-radius: 999px; font-size: .82rem; font-weight: 600;
+    background: rgba(34, 197, 94, .1); color: var(--green); border: 1px solid rgba(34, 197, 94, .25);
+  }
+  .topbar .health .pdot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  /* hero */
+  .hero {
+    max-width: 1100px; margin: 0 auto; padding: 80px 28px 40px;
+    text-align: center;
+    animation: fadeUp .6s ease-out;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 14px; border-radius: 999px; margin-bottom: 22px;
+    background: rgba(251, 191, 36, 0.10);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    color: var(--gold); font-size: .82rem; font-weight: 600;
+  }
+  .hero .badge .pdot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--gold);
+    animation: blink-dot 1.2s infinite;
+  }
+  @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; margin: 0 0 16px;
+    letter-spacing: -.03em; line-height: 1.1;
+  }
+  .hero h1 .grad {
+    background: var(--grad-text);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .sub {
+    color: var(--txt-dim); font-size: clamp(1rem, 1.6vw, 1.15rem);
+    margin: 0 auto 28px; max-width: 680px;
+  }
+  .hero .ctas {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 50px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 12px 22px; border: 0; border-radius: 11px;
+    font: inherit; font-weight: 600; font-size: .98rem; cursor: pointer;
+    text-decoration: none;
+    transition: transform .15s, filter .15s, box-shadow .15s;
+  }
+  .btn.primary {
+    background: var(--grad-primary); color: #0b0b0b;
+    box-shadow: 0 10px 28px -10px rgba(251, 191, 36, 0.5);
+  }
+  .btn.primary:hover { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 14px 32px -10px rgba(251, 191, 36, 0.65); }
+  .btn.ghost {
+    background: rgba(15, 23, 42, 0.6); color: var(--txt);
+    border: 1px solid var(--line-strong);
+  }
+  .btn.ghost:hover { background: rgba(30, 41, 59, 0.6); transform: translateY(-1px); }
+
+  /* stats */
+  .stats {
+    max-width: 1100px; margin: 0 auto; padding: 0 28px;
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 50px;
+    animation: fadeUp .6s ease-out .1s both;
+  }
+  .stat {
+    position: relative; overflow: hidden;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    text-align: center;
+    transition: transform .2s, border-color .2s;
+  }
+  .stat:hover { transform: translateY(-3px); border-color: var(--line-strong); }
+  .stat .ico {
+    width: 44px; height: 44px; border-radius: 12px; margin: 0 auto 12px;
+    display: grid; place-items: center;
+    background: rgba(251, 191, 36, 0.10); color: var(--gold);
+    font-size: 1.3rem;
+    border: 1px solid rgba(251, 191, 36, 0.22);
+  }
+  .stat b {
+    display: block; font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
+    background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4px;
+  }
+  .stat span { color: var(--mut); font-size: .85rem; font-weight: 500; }
+
+  /* cards */
+  .features {
+    max-width: 1100px; margin: 0 auto; padding: 0 28px;
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-bottom: 50px;
+    animation: fadeUp .6s ease-out .15s both;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px; padding: 26px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: transform .2s, border-color .2s;
+    display: flex; flex-direction: column;
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+  .card .ic {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center;
+    background: rgba(251, 191, 36, 0.10); color: var(--gold);
+    font-size: 1.3rem;
+    border: 1px solid rgba(251, 191, 36, 0.22);
+    margin-bottom: 14px;
+  }
+  .card h3 {
+    margin: 0 0 8px; font-size: 1.1rem; font-weight: 700;
+  }
+  .card p { margin: 0 0 18px; color: var(--mut); font-size: .92rem; flex: 1; }
+  .card .go {
+    color: var(--gold); text-decoration: none; font-weight: 600; font-size: .9rem;
+    display: inline-flex; align-items: center; gap: 5px; transition: gap .15s;
+  }
+  .card .go:hover { gap: 9px; }
+
+  /* endpoint */
+  .endpoint {
+    max-width: 1100px; margin: 0 auto 50px; padding: 0 28px;
+    animation: fadeUp .6s ease-out .2s both;
+  }
+  .endpoint .ep-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    backdrop-filter: blur(14px);
+  }
+  .endpoint .ep-box .lbl { color: var(--mut); font-size: .88rem; font-weight: 500; }
+  .endpoint .ep-box code {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    background: rgba(2, 6, 23, 0.7); color: var(--gold);
+    padding: 8px 14px; border-radius: 8px; font-size: .9rem;
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    flex: 1; min-width: 240px; word-break: break-all;
+  }
+  .endpoint .ep-box .copy-btn {
+    background: rgba(251, 191, 36, 0.10); color: var(--gold);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    padding: 7px 14px; border-radius: 8px; font: inherit; font-size: .85rem; font-weight: 600;
+    cursor: pointer; transition: background .15s;
+  }
+  .endpoint .ep-box .copy-btn:hover { background: rgba(251, 191, 36, 0.18); }
+
+  footer {
+    max-width: 1100px; margin: 0 auto; padding: 32px 28px 60px;
+    color: var(--mut); font-size: .82rem; text-align: center;
+    border-top: 1px solid var(--line);
+  }
+  footer p { margin: 4px 0; }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--line-strong);
+    color: var(--txt); padding: 10px 18px; border-radius: 11px;
+    font-size: .9rem; font-weight: 500;
+    box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    z-index: 70;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 720px) {
+    .topbar-inner { padding: 12px 16px; gap: 8px; }
+    .topbar nav { display: none; }
+    .hero { padding: 40px 20px 30px; }
+    .stats, .features, .endpoint { padding-left: 16px; padding-right: 16px; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>🦅 特朗普实时推文 · WS 数据服务</h1>
-    <p class="sub">自托管的 Truth Social 实时监控 + 多源轮询 + AI 翻译 + WebSocket 广播。<br>给 AI / 交易机器人 / 量化系统 / 你的下游消费者用的低延迟数据通道。</p>
 
-    <div class="stats">
-      <div class="stat"><b id="stHist">…</b><span>累计推文</span></div>
-      <div class="stat"><b id="stWs">…</b><span>当前 WS 连接</span></div>
-      <div class="stat"><b id="stKey">…</b><span>启用的 API Key</span></div>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">🦅</div>
+      <span class="name">Trump WS</span>
     </div>
-
-    <div class="cards">
-      <div class="card">
-        <h3>📡 实时演示</h3>
-        <p>直接看 WS 推送效果（需要先在管理后台生成一个 key）。</p>
-        <a class="btn" href="/demo">打开 Demo</a>
-      </div>
-      <div class="card">
-        <h3>📖 对接文档</h3>
-        <p>WS 消息协议、鉴权、Python / Node / Go 客户端示例，开箱即用。</p>
-        <a class="btn" href="/docs">查看文档</a>
-      </div>
-      <div class="card">
-        <h3>🔐 管理后台</h3>
-        <p>生成 / 撤销 API Key，设置过期时间（1 小时 / 1 天 / 1 年 / 永久 / 自定义）。</p>
-        <a class="btn ghost" href="/admin">进入后台</a>
-      </div>
-    </div>
-
-    <p style="color:#64748b;font-size:.9rem;">WS 端点：<code id="wsUrl">ws://this-host/ws?token=&lt;your_api_key&gt;</code></p>
-
-    <footer>© 特朗普实时推文-WS服务 · 仅供内部 / 授权用户使用</footer>
+    <nav>
+      <a href="/" class="active">首页</a>
+      <a href="/demo">实时演示</a>
+      <a href="/docs">对接文档</a>
+      <a href="/admin">管理后台</a>
+    </nav>
+    <div class="spacer"></div>
+    <span class="health"><span class="pdot"></span>服务在线</span>
   </div>
+</div>
+
+<section class="hero">
+  <div class="badge"><span class="pdot"></span>实时 · 自托管 · 低延迟</div>
+  <h1>
+    特朗普实时推文 ·
+    <span class="grad">WS 数据服务</span>
+  </h1>
+  <p class="sub">
+    自托管的 Truth Social 实时监控 → 多源轮询 → AI 翻译 → WebSocket 广播。<br>
+    给你的 AI 助理 / 交易机器人 / 量化系统 / 下游消费者用的低延迟数据通道。
+  </p>
+  <div class="ctas">
+    <a class="btn primary" href="/demo">📡 看实时演示</a>
+    <a class="btn ghost" href="/docs">📖 对接文档</a>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat">
+    <div class="ico">💬</div>
+    <b id="stHist">…</b>
+    <span>缓存推文</span>
+  </div>
+  <div class="stat">
+    <div class="ico">🔌</div>
+    <b id="stWs">…</b>
+    <span>WS 在线连接</span>
+  </div>
+  <div class="stat">
+    <div class="ico">🔑</div>
+    <b id="stKey">—</b>
+    <span>启用的 API Key</span>
+  </div>
+  <div class="stat">
+    <div class="ico">⚡</div>
+    <b id="stLatency">3-10s</b>
+    <span>典型链路延迟</span>
+  </div>
+</section>
+
+<section class="features">
+  <div class="card">
+    <div class="ic">📡</div>
+    <h3>实时演示</h3>
+    <p>直接看 WebSocket 推送效果——连上之后新帖一来就出现，含原文 + 中文翻译 + 来源标签 + 端到端延迟。需要在管理后台先生成一个 API Key。</p>
+    <a class="go" href="/demo">打开 Demo →</a>
+  </div>
+  <div class="card">
+    <div class="ic">📖</div>
+    <h3>对接文档</h3>
+    <p>WebSocket 消息协议、鉴权方式、心跳、消息字段定义；Python / Node.js / Go 三套客户端示例代码；HTTP 备用接口与错误码说明。</p>
+    <a class="go" href="/docs">查看文档 →</a>
+  </div>
+  <div class="card">
+    <div class="ic">🔐</div>
+    <h3>管理后台</h3>
+    <p>生成 / 撤销 API Key，设置过期时间（1 小时 / 1 天 / 7 天 / 1 年 / 永久 / 自定义）。撤销时已建立的 WS 连接会被立即踢出。</p>
+    <a class="go" href="/admin">进入后台 →</a>
+  </div>
+</section>
+
+<section class="endpoint">
+  <div class="ep-box">
+    <span class="lbl">WS 端点</span>
+    <code id="wsUrl">ws://this-host/ws?token=&lt;your_api_key&gt;</code>
+    <button class="copy-btn" id="copyEpBtn">复制</button>
+  </div>
+</section>
+
+<footer>
+  <p>© 特朗普实时推文 · WS 服务 — 仅供内部 / 授权用户使用</p>
+  <p style="opacity:.6;">不开放公开注册 · Key 由管理员手动签发</p>
+</footer>
+
+<div class="toast" id="toast">已复制</div>
+
 <script>
-  // 不依赖 admin 密码，调健康检查公开端点
+  function toast(t) {
+    const el = document.getElementById('toast');
+    el.textContent = t; el.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
   fetch('/health').then(r => r.json()).then(h => {
-    document.getElementById('stHist').textContent = h.history ?? '0';
-    document.getElementById('stWs').textContent = h.ws?.clients ?? '0';
-  }).catch(()=>{});
-  // 当前域显示
+    document.getElementById('stHist').textContent = h.history ?? 0;
+    document.getElementById('stWs').textContent = h.ws?.clients ?? 0;
+  }).catch(()=>{
+    document.getElementById('stHist').textContent = '?';
+    document.getElementById('stWs').textContent = '?';
+  });
+
   const u = new URL(location.href);
   u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
   u.pathname = '/ws';
   u.search = '?token=<your_api_key>';
   document.getElementById('wsUrl').textContent = u.toString();
-  document.getElementById('stKey').textContent = '请进后台查看';
+  document.getElementById('stKey').textContent = '后台查看';
+
+  document.getElementById('copyEpBtn').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(document.getElementById('wsUrl').textContent);
+      toast('已复制到剪贴板');
+    } catch { toast('复制失败'); }
+  };
 </script>
 </body>
 </html>
