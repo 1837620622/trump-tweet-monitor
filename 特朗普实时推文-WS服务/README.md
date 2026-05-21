@@ -1,7 +1,6 @@
 # 特朗普实时推文 · WebSocket 服务
 
-> **私有项目 · 不开源 · 不分发**
-> 部署在你自己的服务器（HK 43.240.13.39）。Cloudflare 那套 `cloudflare-worker.js` + `index.html` 仍然在 `trump-x.chuankangkk.top` 独立跑，不受影响。
+> 自托管 WebSocket 数据服务。仓库根目录原有的 Cloudflare Workers 站（`cloudflare-worker.js` + `index.html`）独立运行，互不影响。
 
 实时抓取 Donald Trump 在 Truth Social 上的新帖，经 Groq AI 中文翻译后，通过 **WebSocket** 实时广播给已授权的客户端（AI 分析、量化策略、自定义机器人等）。带完整 API Key 管理后台 + 演示页面 + 对接文档。
 
@@ -47,7 +46,7 @@
 ## 快速开始
 
 ```bash
-cp .env.example .env       # admin 默认口令 chuankangkk，可在 .env 改
+cp .env.example .env       # 必填 ADMIN_PASSWORD（未设置则 /admin 拒绝所有请求）
 npm install                # better-sqlite3 + ws，仅 2 个直接依赖
 npm run smoke              # 跑 22 项端到端测试
 npm start                  # 监听 :8787
@@ -55,7 +54,7 @@ npm start                  # 监听 :8787
 
 访问入口：
 - `http://localhost:8787/`          首页
-- `http://localhost:8787/admin`     管理后台（默认密码 `chuankangkk`）
+- `http://localhost:8787/admin`     管理后台（密码 = .env 中的 `ADMIN_PASSWORD`）
 - `http://localhost:8787/demo`      实时 WS 演示
 - `http://localhost:8787/docs`      对接文档
 - `ws://localhost:8787/ws?token=…`  WebSocket 端点
@@ -71,7 +70,6 @@ ssh root@<your-server> 'bash /opt/trump-truth-ws-src/deploy/install.sh'
 
 ## 安全提醒
 
-- repo **必须保持 private**。`chuankangkk` 是硬编码默认密码，公开等于裸奔。
-- 生产建议在 `.env` 里写一个 24+ 位随机串覆盖默认。
+- `ADMIN_PASSWORD` 必须通过 `.env` 设置为长随机串（24+ 位），未设置时 admin 接口直接拒绝。
+- 凭证类配置（admin 密码、Groq key、PushPlus token）只放 `.env`（已被 `.gitignore`），不要进仓库。
 - HTTPS 用 Caddy / Nginx 反代，不要把 8787 直接暴露公网。
-- 你之前那个 PushPlus token (`7dba765a...`) 已经在 git 历史里泄露了，**去 pushplus.plus 后台立刻重置**。

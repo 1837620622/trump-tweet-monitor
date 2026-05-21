@@ -62,13 +62,20 @@ sudo -u "$SERVICE_USER" npm install --omit=dev
 
 # ---------- 5. .env ----------
 if [[ ! -f "$INSTALL_DIR/.env" ]]; then
-  c_yel "[5/6] 创建 .env（默认使用内置 admin 口令 chuankangkk）"
-  cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
+  c_yel "[5/6] 创建 .env"
+  cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env" 2>/dev/null || true
+  # 自动生成一个随机 admin 口令并写入 .env（如果用户没改）
+  RAND_PW=$(openssl rand -hex 24)
+  if grep -q '^ADMIN_PASSWORD=' "$INSTALL_DIR/.env" 2>/dev/null; then
+    sed -i "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=$RAND_PW|" "$INSTALL_DIR/.env"
+  else
+    echo "ADMIN_PASSWORD=$RAND_PW" >> "$INSTALL_DIR/.env"
+  fi
   chown "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/.env"
   chmod 600 "$INSTALL_DIR/.env"
-  c_green "    .env 已就位。admin 默认口令 = chuankangkk"
-  c_yel "    建议编辑 $INSTALL_DIR/.env 填上："
-  c_yel "      ADMIN_PASSWORD  -> 改成长随机串覆盖默认"
+  c_green "    .env 已就位。已随机生成 ADMIN_PASSWORD，请记录："
+  c_green "      ADMIN_PASSWORD=$RAND_PW"
+  c_yel "    其他可选项请编辑 $INSTALL_DIR/.env："
   c_yel "      GROQ_API_KEY    -> 在 console.groq.com/keys 拿"
   c_yel "      PUSHPLUS_TOKEN  -> 在 pushplus.plus 拿（如需微信推送）"
 else

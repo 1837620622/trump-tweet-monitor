@@ -36,8 +36,8 @@ const { createHandler } = require('./http');
 async function main() {
   logger.info('boot: 特朗普实时推文-WS服务 v2.0');
   logger.info(`config: rss=${config.rss.enabled} truth=${config.truth.enabled} translate=${config.translate.enabled} (groq=${!!config.translate.groqKey}) push=${config.pushplus.enabled} port=${config.port}`);
-  if (config.adminPassword === 'chuankangkk') {
-    logger.warn('admin: 正在使用内置默认口令 (chuankangkk)。生产环境建议在 .env 里 ADMIN_PASSWORD=<随机长串> 覆盖。');
+  if (!config.adminPassword) {
+    logger.warn('admin: ADMIN_PASSWORD 未设置，/admin 接口将拒绝所有请求。请在 .env 中配置 ADMIN_PASSWORD=<随机长串>');
   }
 
   const db = dbMod.open(config.dbFile);

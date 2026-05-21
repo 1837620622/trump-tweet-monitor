@@ -3,179 +3,122 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WS 对接文档 · 特朗普实时推文 WS 服务</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>对接文档 · Trump WS</title>
+<link rel="stylesheet" href="/app.css">
 <style>
-  :root {
-    color-scheme: dark;
-    --bg-0: #050816;
-    --surface: rgba(15, 23, 42, 0.6);
-    --line: rgba(148, 163, 184, 0.12);
-    --line-strong: rgba(148, 163, 184, 0.25);
-    --txt: #e2e8f0;
-    --txt-dim: #cbd5e1;
-    --mut: #94a3b8;
-    --gold: #fbbf24;
-    --red: #ef4444;
-    --green: #22c55e;
-    --blue: #38bdf8;
-    --code-bg: rgba(2, 6, 23, 0.7);
-    --grad-primary: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
-    --grad-text: linear-gradient(90deg, #fbbf24, #f97316, #ef4444);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    min-height: 100vh;
-    background: var(--bg-0);
-    background-image:
-      radial-gradient(at 10% -10%, rgba(251, 191, 36, 0.12) 0px, transparent 40%),
-      radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.10) 0px, transparent 40%);
-    color: var(--txt); line-height: 1.65;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  /* topbar */
-  .topbar { position: sticky; top: 0; z-index: 30;
-    backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    background: rgba(5, 8, 22, 0.72); border-bottom: 1px solid var(--line); }
-  .topbar-inner { max-width: 1100px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; }
-  .brand .logo { width: 32px; height: 32px; border-radius: 9px; background: var(--grad-primary);
-    display: grid; place-items: center; box-shadow: 0 6px 20px -8px rgba(251, 191, 36, 0.6); color: #0b0b0b; font-size: 1.05rem; }
-  .brand .name { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .topbar nav { display: flex; gap: 4px; margin-left: 14px; }
-  .topbar nav a { color: var(--txt-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px;
-    font-size: .92rem; font-weight: 500; transition: all .15s; }
-  .topbar nav a:hover { background: rgba(148, 163, 184, 0.1); color: var(--txt); }
-  .topbar nav a.active { color: var(--gold); background: rgba(251, 191, 36, 0.1); }
-
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 28px 80px; }
-  .hero { margin-bottom: 28px; animation: fadeUp .55s ease-out; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-  .hero h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -.02em; display: flex; align-items: center; gap: 12px; }
-  .hero h1 .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
-    background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.3); font-size: 1.4rem; }
-  .hero h1 .grad { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero .sub { color: var(--mut); margin: 0; font-size: .98rem; max-width: 760px; }
-  h2 { font-size: 1.25rem; margin: 36px 0 14px; font-weight: 700; padding-top: 22px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
-  h2::before { content: ""; width: 4px; height: 20px; background: var(--grad-primary); border-radius: 4px; }
-  h3 { font-size: 1.02rem; color: var(--gold); margin: 22px 0 8px; font-weight: 600; }
-  p, li { color: var(--txt-dim); }
-  code { background: var(--code-bg); padding: 2px 8px; border-radius: 6px; color: var(--gold);
-    font-size: .88em; font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; border: 1px solid var(--line); }
-  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
-    padding: 16px 18px; overflow: auto; position: relative;
-    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: .88rem; line-height: 1.55; }
-  pre code { background: none; padding: 0; color: var(--txt); border: 0; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
-    backdrop-filter: blur(12px); }
-  th, td { border-bottom: 1px solid var(--line); padding: 11px 14px; text-align: left; }
-  th { color: var(--mut); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; background: rgba(15, 23, 42, 0.5); }
-  tbody tr:last-child td { border-bottom: 0; }
-  tbody tr:hover { background: rgba(251, 191, 36, 0.03); }
-  .copy { position: absolute; top: 10px; right: 10px; background: rgba(251, 191, 36, 0.10); color: var(--gold);
-    border: 1px solid rgba(251, 191, 36, 0.28); border-radius: 7px; padding: 4px 10px; font-size: .78rem;
-    font-weight: 600; cursor: pointer; transition: background-color .15s; }
-  .copy:hover { background: rgba(251, 191, 36, 0.18); }
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: rgba(15, 23, 42, 0.95); border: 1px solid var(--line-strong); color: var(--txt);
-    padding: 10px 18px; border-radius: 11px; font-size: .9rem; font-weight: 500;
-    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 70; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  a { color: var(--blue); }
-  .note { background: rgba(251, 191, 36, .07); border: 1px solid rgba(251, 191, 36, .25);
-    border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; color: #fde68a; font-size: .9rem; }
+  .toc { margin: 14px 0 24px; padding: 12px 16px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; font-size: 13px; }
+  .toc a { color: var(--txt-2); margin-right: 16px; }
+  .toc a:hover { color: var(--accent); }
+  h2 { padding-top: 18px; margin-top: 24px; border-top: 1px solid var(--line); }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  table th:nth-child(1), table td:nth-child(1) { width: 220px; }
+  .note { background: var(--bg-2); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 12px 0; color: var(--txt-2); font-size: 13px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><div class="logo">🦅</div><span class="name">Trump WS</span></div>
+    <div class="brand">
+      <span class="mark">TRUMP-WS</span>
+      <span class="name">对接文档</span>
+    </div>
     <nav>
       <a href="/">首页</a>
-      <a href="/demo">实时演示</a>
-      <a href="/docs" class="active">对接文档</a>
-      <a href="/admin">管理后台</a>
+      <a href="/demo">演示</a>
+      <a href="/docs" class="active">文档</a>
+      <a href="/admin">管理</a>
     </nav>
   </div>
 </div>
 
 <div class="wrap">
-<div class="hero">
-  <h1><span class="ico">📖</span> <span class="grad">WebSocket 对接文档</span></h1>
-  <p class="sub">通过 WebSocket 把特朗普 Truth Social 实时推文推送到你的客户端 / AI 服务。下文所有示例已在生产中验证，复制即跑。</p>
+
+<h1>WebSocket 对接文档</h1>
+
+<div class="toc">
+  <a href="#endpoint">1 端点 / 鉴权</a>
+  <a href="#lifecycle">2 连接生命周期</a>
+  <a href="#client">3 客户端 → 服务端</a>
+  <a href="#server">4 服务端 → 客户端</a>
+  <a href="#tweet">5 Tweet 字段</a>
+  <a href="#python">6 Python</a>
+  <a href="#node">7 Node.js</a>
+  <a href="#http">8 HTTP 接口</a>
+  <a href="#errors">9 错误码</a>
+  <a href="#latency">10 延迟</a>
 </div>
 
-<h2 id="endpoint">1. 端点 & 鉴权</h2>
+<h2 id="endpoint">1. 端点 / 鉴权</h2>
 <table>
-  <tr><th>WS 端点</th><td><code>wss://&lt;your-host&gt;/ws</code> （明文 IP/端口环境用 <code>ws://&lt;ip&gt;:&lt;port&gt;/ws</code>）</td></tr>
-  <tr><th>HTTP 基址</th><td><code>https://&lt;your-host&gt;</code></td></tr>
-  <tr><th>鉴权方式 A（推荐，浏览器/简单 SDK）</th><td>URL 参数：<code>?token=ttws_live_xxx</code></td></tr>
-  <tr><th>鉴权方式 B（服务端调用）</th><td>HTTP 头：<code>Authorization: Bearer ttws_live_xxx</code></td></tr>
-  <tr><th>鉴权失败</th><td>HTTP 401，连接断开</td></tr>
-  <tr><th>过期/吊销</th><td>已建立的连接会在下次心跳时被踢出，<code>close code = 4003</code></td></tr>
+  <tbody>
+    <tr><td>WS 端点</td><td><code>ws://&lt;host&gt;:8787/ws</code>（上 https 反代后用 <code>wss://</code>）</td></tr>
+    <tr><td>HTTP 基址</td><td><code>http(s)://&lt;host&gt;:8787</code></td></tr>
+    <tr><td>鉴权方式 A</td><td>URL 参数 <code>?token=ttws_live_xxx</code>（浏览器 / 简单 SDK 推荐）</td></tr>
+    <tr><td>鉴权方式 B</td><td>HTTP 头 <code>Authorization: Bearer ttws_live_xxx</code>（服务端调用推荐）</td></tr>
+    <tr><td>鉴权失败</td><td>HTTP 401，连接立即断</td></tr>
+    <tr><td>过期 / 吊销</td><td>下次心跳时强断，close code 4003</td></tr>
+  </tbody>
 </table>
-
-<div class="note">API Key 来自管理后台 <a href="/admin">/admin</a>。创建时可选过期：1 小时 / 1 天 / 1 年 / 永久 / 自定义。</div>
+<div class="note">API Key 在 <a href="/admin">/admin</a> 后台创建。可选有效期：1 小时 / 1 天 / 7 天 / 30 天 / 1 年 / 永久 / 自定义。</div>
 
 <h2 id="lifecycle">2. 连接生命周期</h2>
 <pre><code>client                        server
   | --- HTTP Upgrade ----->     |
   | &lt;--- 101 Switching  ---  |
-  | &lt;--- hello              ---|   服务器主动发的第一帧
+  | &lt;--- hello              ---|   服务端主动发的第一帧
   | --- subscribe (opt) ---&gt;   |
   | &lt;--- subscribed         ---|
-  | &lt;--- tweet (real-time) ----|   每来一条新帖一帧
+  | &lt;--- tweet (real-time) ----|   每条新帖一帧
   | &lt;--- ping (every 25s) -----|   WS 协议层 ping
   | ---  pong  ------------&gt;   |   ws 库自动回 pong
   | --- ping (JSON, opt) --&gt;   |   应用层心跳
-  | &lt;--- pong (JSON)         ---|
+  | &lt;--- pong (JSON)        ---|
 </code></pre>
 
-<h2 id="upstream">3. 客户端 → 服务端 消息</h2>
+<h2 id="client">3. 客户端 → 服务端 消息</h2>
 <table>
-  <tr><th>type</th><th>字段</th><th>说明</th></tr>
-  <tr><td><code>ping</code></td><td>—</td><td>应用层心跳；服务端回 <code>pong</code></td></tr>
-  <tr><td><code>subscribe</code></td><td><code>source: "all"|"rss"|"truth"</code></td><td>过滤数据源（默认 all）</td></tr>
-  <tr><td><code>history</code></td><td><code>limit?: 1..200 (默认 20)</code></td><td>请求最近 N 条历史</td></tr>
+  <thead><tr><th>type</th><th>字段</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>ping</code></td><td>—</td><td>应用层心跳；服务端回 pong</td></tr>
+    <tr><td><code>subscribe</code></td><td><code>source: "all" | "rss" | "truth"</code></td><td>过滤数据源（默认 all）</td></tr>
+    <tr><td><code>history</code></td><td><code>limit?: 1..200 (默认 20)</code></td><td>请求最近 N 条历史</td></tr>
+  </tbody>
 </table>
 
-<h2 id="downstream">4. 服务端 → 客户端 消息</h2>
+<h2 id="server">4. 服务端 → 客户端 消息</h2>
 <table>
-  <tr><th>type</th><th>关键字段</th><th>说明</th></tr>
-  <tr><td><code>hello</code></td><td><code>ts, server_version, key</code></td><td>连接建立第一帧；key 包含当前用的 id / prefix / expires_at</td></tr>
-  <tr><td><code>subscribed</code></td><td><code>source</code></td><td>订阅成功确认</td></tr>
-  <tr><td><code>tweet</code></td><td><code>data: Tweet</code></td><td>实时新帖</td></tr>
-  <tr><td><code>history</code></td><td><code>data: Tweet[]</code></td><td>历史回放</td></tr>
-  <tr><td><code>pong</code></td><td><code>ts</code></td><td>心跳应答</td></tr>
-  <tr><td><code>error</code></td><td><code>message</code></td><td>错误（不会自动断）</td></tr>
+  <thead><tr><th>type</th><th>关键字段</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>hello</code></td><td>ts, server_version, key</td><td>连接建立第一帧；key.id / prefix / expires_at</td></tr>
+    <tr><td><code>subscribed</code></td><td>source</td><td>订阅成功确认</td></tr>
+    <tr><td><code>tweet</code></td><td>data: Tweet</td><td>实时新帖</td></tr>
+    <tr><td><code>history</code></td><td>data: Tweet[]</td><td>历史回放</td></tr>
+    <tr><td><code>pong</code></td><td>ts</td><td>心跳应答</td></tr>
+    <tr><td><code>error</code></td><td>message</td><td>错误（不会自动断）</td></tr>
+  </tbody>
 </table>
 
-<h3>Tweet 数据结构</h3>
+<h2 id="tweet">5. Tweet 数据结构</h2>
 <pre><code>{
-  "guid":        "https://truthsocial.com/@realDonaldTrump/posts/12345",
-  "source":      "rss",           // 或 "truth"
+  "guid":        "https://truthsocial.com/@realDonaldTrump/posts/...",
+  "source":      "rss",           // rss | truth | mastodon
   "title":       "原文纯文本",
   "contentHtml": "&lt;p&gt;原 HTML&lt;/p&gt;",
   "link":        "https://truthsocial.com/...",
-  "pubDate":     "2026-05-18T14:47:44.000Z",
+  "pubDate":     "2026-05-21T03:13:53.000Z",
   "author":      "@realDonaldTrump",
   "mediaUrl":    "https://.../image.jpg",   // 没图时 null
-  "translated":  "中文翻译 (服务端预翻好)",
-  "received_at": "2026-05-18T14:47:46.123Z",
-  "raw":         { ... }                    // 调试用，AI 不要喂
+  "translated":  "中文翻译（服务端预翻好）",
+  "received_at": "2026-05-21T03:15:05.421Z",
+  "raw":         { ... }                    // 调试用
 }</code></pre>
-<p><b>给 AI 喂数据建议：</b>把 <code>title</code>（英文原文）和 <code>translated</code>（中文）一起放进 prompt，再附 <code>pubDate</code> / <code>source</code> / <code>link</code> 作为上下文。</p>
+<p class="dim" style="font-size:12px;">喂 AI 建议：把 <code>title</code>（原文）和 <code>translated</code>（译文）一起放进 prompt，附 <code>pubDate</code> / <code>source</code> / <code>link</code> 做上下文。</p>
 
-<h2 id="python">5. Python 客户端示例（粘贴即跑）</h2>
+<h2 id="python">6. Python 客户端</h2>
 <pre><code>import asyncio, json, websockets
 
-URL = "wss://YOUR-HOST/ws?token=ttws_live_XXXXXXXXXXXXXXXXX"
+URL = "ws://YOUR-HOST:8787/ws?token=ttws_live_xxxxxxxxxxxxxxxxx"
 
 async def main():
     async for ws in websockets.connect(URL, ping_interval=20):
@@ -187,18 +130,15 @@ async def main():
                 if msg["type"] == "tweet":
                     t = msg["data"]
                     print(f"[{t['source']}] {t['pubDate']} | {t['title'][:80]}")
-                    # 这里调用你的 AI / 写库 / 触发交易
-                elif msg["type"] == "history":
-                    print(f"got {len(msg['data'])} historical tweets")
         except websockets.ConnectionClosed:
-            print("reconnecting…")
             continue
 
-asyncio.run(main())</code></pre>
+asyncio.run(main())
+</code></pre>
 
-<h2 id="node">6. Node.js 客户端示例</h2>
+<h2 id="node">7. Node.js 客户端</h2>
 <pre><code>const WebSocket = require('ws'); // npm i ws
-const URL = 'wss://YOUR-HOST/ws?token=ttws_live_XXXXXXXXXXXXXXXXX';
+const URL = 'ws://YOUR-HOST:8787/ws?token=ttws_live_xxxxxxxxxxxxxxxxx';
 
 function connect() {
   const ws = new WebSocket(URL);
@@ -208,46 +148,49 @@ function connect() {
   });
   ws.on('message', raw => {
     const m = JSON.parse(raw);
-    if (m.type === 'tweet') {
-      console.log(`[${m.data.source}] ${m.data.title.slice(0, 80)}`);
-      // -> 你的 AI 调用
-    }
+    if (m.type === 'tweet') console.log(`[${m.data.source}] ${m.data.title.slice(0, 80)}`);
   });
   ws.on('close', () => setTimeout(connect, 1500));
   ws.on('error', e => console.error(e.message));
 }
-connect();</code></pre>
+connect();
+</code></pre>
 
-<h2 id="curl">7. HTTP 接口（不需要 WS 时备用）</h2>
+<h2 id="http">8. HTTP 接口</h2>
 <table>
-  <tr><th>Path</th><th>说明</th></tr>
-  <tr><td><code>GET /health</code></td><td>健康检查 + 连接数 + 历史数</td></tr>
-  <tr><td><code>GET /api/tweets?limit=50</code></td><td>当前缓存历史 JSON 数组（最新在前）—— 公开</td></tr>
+  <thead><tr><th>Path</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET /health</code></td><td>健康检查 + 连接数 + 历史数</td></tr>
+    <tr><td><code>GET /api/tweets?limit=50</code></td><td>当前缓存历史 JSON 数组（最新在前）</td></tr>
+  </tbody>
 </table>
 
-<h2 id="errors">8. 错误码 & 重连建议</h2>
+<h2 id="errors">9. 错误码 / 重连</h2>
 <table>
-  <tr><th>状况</th><th>HTTP / WS Close</th><th>说明</th></tr>
-  <tr><td>未带 token</td><td>HTTP 401 (<code>missing_token</code>)</td><td>客户端补 token 后重连</td></tr>
-  <tr><td>token 格式不对</td><td>401 (<code>bad_format</code>)</td><td>token 必须 <code>ttws_live_</code> 开头</td></tr>
-  <tr><td>token 不存在</td><td>401 (<code>not_found</code>)</td><td>已被删除</td></tr>
-  <tr><td>token 已撤销</td><td>401 / Close 4003 (<code>revoked</code>)</td><td>联系管理员重新发</td></tr>
-  <tr><td>token 已过期</td><td>401 / Close 4003 (<code>expired</code>)</td><td>续期或申请新 key</td></tr>
+  <thead><tr><th>状况</th><th>HTTP / WS Close</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>未带 token</td><td>HTTP 401 (missing_token)</td><td>补 token 后重连</td></tr>
+    <tr><td>token 格式不对</td><td>401 (bad_format)</td><td>必须 <code>ttws_live_</code> 开头</td></tr>
+    <tr><td>token 不存在</td><td>401 (not_found)</td><td>已被删除</td></tr>
+    <tr><td>token 已撤销</td><td>401 / Close 4003 (revoked)</td><td>找管理员重发</td></tr>
+    <tr><td>token 已过期</td><td>401 / Close 4003 (expired)</td><td>续期或申请新 key</td></tr>
+  </tbody>
 </table>
-<p>建议客户端：指数退避重连（1s → 2s → 4s … 上限 30s）；遇到 <code>4003</code> 不要无限重连，先报警。</p>
+<p class="dim" style="font-size:12px;">建议客户端指数退避重连（1s → 2s → 4s … 上限 30s）；遇到 4003 不要无限重连。</p>
 
-<h2 id="latency">9. 延迟说明</h2>
-<p>这里说实话，给你管理预期：</p>
+<h2 id="latency">10. 延迟说明</h2>
 <table>
-  <tr><th>链路</th><th>典型耗时</th></tr>
-  <tr><td>Trump 在 Truth Social 发帖 → 出现在 <code>trumpstruth.org</code> RSS</td><td>5 ~ 60 秒（其归档站轮询节奏）</td></tr>
-  <tr><td>服务端 RSS 轮询命中（默认 10s 间隔）</td><td>0 ~ 10 秒</td></tr>
-  <tr><td>服务端 → WS 客户端</td><td>&lt; 50 ms（同机房）</td></tr>
+  <tbody>
+    <tr><td>发帖 → trumpstruth.org RSS / Mastodon RSS</td><td>30 – 80 秒（上游索引节奏）</td></tr>
+    <tr><td>上游 → 本服务轮询命中（10s 间隔，多源并发）</td><td>0 – 10 秒</td></tr>
+    <tr><td>本服务 → WS 客户端</td><td>&lt; 50 ms</td></tr>
+  </tbody>
 </table>
-<p>合计 <b>5 ~ 70 秒</b>。如果服务器能直连 truthsocial.com 一手 API（默认每 3 秒），上界可压到约 <b>3 ~ 10 秒</b>。</p>
+<p class="dim" style="font-size:12px;">合计 30 – 90 秒。如果服务器能直连 truthsocial.com 一手 API（默认每 3 秒），上界可压到约 3 – 10 秒。</p>
 
 <div class="toast" id="toast">已复制</div>
 </div>
+
 <script>
 document.querySelectorAll('pre').forEach(pre => {
   const btn = document.createElement('button');
@@ -256,7 +199,7 @@ document.querySelectorAll('pre').forEach(pre => {
     try {
       await navigator.clipboard.writeText(pre.innerText.replace(/^复制\n/, ''));
       const t = document.getElementById('toast'); t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 1500);
+      setTimeout(() => t.classList.remove('show'), 1400);
     } catch {}
   };
   pre.appendChild(btn);

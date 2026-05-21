@@ -3,288 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>实时演示 · 特朗普实时推文 WS 服务</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>实时演示 · Trump WS</title>
+<link rel="stylesheet" href="/app.css">
 <style>
-  :root {
-    color-scheme: dark;
-    --bg-0: #050816;
-    --bg-1: #0b1226;
-    --surface: rgba(15, 23, 42, 0.6);
-    --surface-strong: rgba(15, 23, 42, 0.92);
-    --line: rgba(148, 163, 184, 0.12);
-    --line-strong: rgba(148, 163, 184, 0.25);
-    --txt: #e2e8f0;
-    --txt-dim: #cbd5e1;
-    --mut: #94a3b8;
-    --gold: #fbbf24;
-    --red: #ef4444;
-    --green: #22c55e;
-    --blue: #38bdf8;
-    --cyan: #67e8f9;
-    --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
-    --grad-primary: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
-    --grad-text: linear-gradient(90deg, #fbbf24, #f97316, #ef4444);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    min-height: 100vh;
-    background: var(--bg-0);
-    background-image:
-      radial-gradient(at 10% -10%, rgba(251, 191, 36, 0.12) 0px, transparent 40%),
-      radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.10) 0px, transparent 40%),
-      radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.06) 0px, transparent 50%);
-    color: var(--txt);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* topbar */
-  .topbar {
-    position: sticky; top: 0; z-index: 30;
-    backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    background: rgba(5, 8, 22, 0.72);
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar-inner {
-    max-width: 1240px; margin: 0 auto;
-    padding: 14px 28px;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  }
-  .brand {
-    display: flex; align-items: center; gap: 10px;
-    font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em;
-  }
-  .brand .logo {
-    width: 32px; height: 32px; border-radius: 9px;
-    background: var(--grad-primary);
-    display: grid; place-items: center;
-    box-shadow: 0 6px 20px -8px rgba(251, 191, 36, 0.6);
-    color: #0b0b0b; font-size: 1.05rem;
-  }
-  .brand .name {
-    background: var(--grad-text);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .brand .tag {
-    font-size: .7rem; padding: 2px 7px; border-radius: 999px;
-    background: rgba(56, 189, 248, 0.15); color: var(--blue);
-    border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 600;
-    letter-spacing: .04em;
-  }
-  .topbar nav { display: flex; gap: 4px; margin-left: 14px; }
-  .topbar nav a {
-    color: var(--txt-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px;
-    font-size: .92rem; font-weight: 500; transition: all .15s;
-  }
-  .topbar nav a:hover { background: rgba(148, 163, 184, 0.1); color: var(--txt); }
-  .topbar nav a.active { color: var(--gold); background: rgba(251, 191, 36, 0.1); }
-  .topbar .spacer { flex: 1; }
-  .topbar .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .topbar .controls input {
-    background: rgba(2, 6, 23, 0.65);
-    border: 1px solid var(--line-strong);
-    color: var(--txt); padding: 8px 12px; border-radius: 9px;
-    font: inherit; font-size: .9rem; min-width: 280px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .topbar .controls input:focus {
-    outline: 0; border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
-  }
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; border: 0; border-radius: 9px;
-    font: inherit; font-weight: 600; font-size: .9rem; cursor: pointer;
-    transition: transform .12s, filter .15s, box-shadow .15s;
-    white-space: nowrap;
-  }
-  .btn.primary {
-    background: var(--grad-primary); color: #0b0b0b;
-    box-shadow: 0 6px 18px -8px rgba(251, 191, 36, 0.5);
-  }
-  .btn.primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
-  .btn.ghost { background: rgba(15, 23, 42, 0.6); color: var(--txt); border: 1px solid var(--line-strong); }
-  .btn.ghost:hover { background: rgba(30, 41, 59, 0.6); }
-
-  /* status badge */
-  .status {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 11px; border-radius: 999px; font-size: .82rem; font-weight: 600;
-    background: rgba(15, 23, 42, 0.6); color: var(--mut);
-    border: 1px solid var(--line-strong);
-  }
-  .status .pdot {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--mut);
-  }
-  .status.connecting { color: var(--gold); border-color: rgba(251, 191, 36, .35); background: rgba(251, 191, 36, .08); }
-  .status.connecting .pdot { background: var(--gold); animation: blink-dot 1s infinite; }
-  .status.connected { color: var(--green); border-color: rgba(34, 197, 94, .35); background: rgba(34, 197, 94, .08); }
-  .status.connected .pdot {
-    background: var(--green);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
-    animation: pulse-dot 1.6s infinite;
-  }
-  .status.error { color: var(--red); border-color: rgba(239, 68, 68, .35); background: rgba(239, 68, 68, .08); }
-  .status.error .pdot { background: var(--red); }
-  @keyframes pulse-dot {
-    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-  }
-  @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-
-  /* layout */
-  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 28px 60px; }
-
-  .hero {
-    margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; flex-wrap: wrap;
-    animation: fadeUp .5s ease-out;
-  }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  .hero h1 {
-    font-size: 1.55rem; font-weight: 800; margin: 0; letter-spacing: -.02em;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .hero h1 .ico {
-    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
-    background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3);
-    font-size: 1.2rem;
-  }
-  .hero .meta {
-    display: flex; gap: 8px; flex-wrap: wrap; color: var(--mut); font-size: .85rem;
-  }
-  .hero .meta .chip {
-    padding: 4px 10px; border-radius: 8px;
-    background: rgba(15, 23, 42, 0.6); border: 1px solid var(--line);
-  }
-  .hero .meta .chip b { color: var(--gold); font-variant-numeric: tabular-nums; }
-
-  /* feed */
-  .feed { display: flex; flex-direction: column; gap: 14px; }
-  .item {
+  .demo-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 16px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 16px; padding: 22px;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.4);
-    animation: cardIn .45s ease-out;
-    position: relative; overflow: hidden;
+    border-radius: 4px;
+    margin-bottom: 16px;
   }
-  .item.new {
-    animation: cardInGlow .8s ease-out;
+  .demo-bar input { flex: 1; }
+  .demo-bar .status-text { font-size: 12px; color: var(--dim); min-width: 120px; }
+  .meta-bar {
+    display: flex; gap: 16px; padding: 8px 0; margin-bottom: 12px;
+    font-size: 12px; color: var(--dim);
   }
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: none; }
+  .meta-bar b { color: var(--txt); font-family: var(--mono); font-weight: 500; margin-left: 4px; }
+
+  .feed { display: flex; flex-direction: column; gap: 0; }
+  .item {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-top: 0;
+    background: var(--surface);
   }
-  @keyframes cardInGlow {
-    0% { opacity: 0; transform: translateY(-10px); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-    30% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.18); }
-    100% { opacity: 1; transform: none; box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.4); }
+  .item:first-child { border-top: 1px solid var(--line); }
+  .item.new { background: var(--surface-2); border-left: 2px solid var(--accent); }
+  .item .row1 {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 8px; font-size: 12px; color: var(--dim);
   }
-  .item .meta {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    color: var(--mut); font-size: .82rem; margin-bottom: 10px;
+  .item .row1 .src {
+    text-transform: uppercase; font-family: var(--mono); font-size: 11px;
+    padding: 1px 6px; border-radius: 2px; border: 1px solid var(--line-2);
+    color: var(--txt-2);
   }
-  .src-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .05em;
-  }
-  .src-pill.rss { background: rgba(56, 189, 248, .15); color: var(--blue); border: 1px solid rgba(56, 189, 248, .3); }
-  .src-pill.truth { background: rgba(251, 191, 36, .15); color: var(--gold); border: 1px solid rgba(251, 191, 36, .3); }
-  .src-pill.other { background: rgba(148, 163, 184, .15); color: var(--mut); border: 1px solid var(--line-strong); }
-  .meta .when { color: var(--txt-dim); }
-  .meta .author { color: var(--mut); }
-  .meta a.src {
-    color: var(--blue); text-decoration: none;
-    padding: 2px 8px; border-radius: 6px;
-    background: rgba(56, 189, 248, .08); border: 1px solid rgba(56, 189, 248, .18);
-    transition: background-color .15s;
-  }
-  .meta a.src:hover { background: rgba(56, 189, 248, .18); }
+  .item .row1 .src.rss { color: var(--ok); border-color: rgba(106,164,92,.4); }
+  .item .row1 .src.truth { color: var(--accent); border-color: rgba(200,122,61,.4); }
+  .item .row1 .src.mastodon { color: var(--warn); border-color: rgba(211,154,60,.4); }
+  .item .row1 .lag.warn { color: var(--warn); }
+  .item .row1 .lag.slow { color: var(--bad); }
+  .item .row1 a { color: var(--accent); }
   .item .title {
-    white-space: pre-wrap; line-height: 1.6; font-size: 1.02rem;
-    color: var(--txt); margin: 0 0 12px;
+    font-size: 14.5px; color: var(--txt); line-height: 1.55;
+    margin: 4px 0; white-space: pre-wrap;
   }
   .item .tr {
-    background: rgba(56, 189, 248, .06);
-    border-left: 3px solid var(--blue);
-    padding: 12px 16px; border-radius: 0 10px 10px 0;
-    color: var(--cyan);
-    white-space: pre-wrap; line-height: 1.55;
-    font-size: .95rem; margin-top: 6px;
+    margin-top: 8px; padding: 8px 12px; background: var(--bg-2);
+    border-left: 2px solid var(--line-2); font-size: 13.5px;
+    color: var(--txt-2); white-space: pre-wrap;
   }
   .item .tr .label {
-    display: inline-block; font-size: .7rem; font-weight: 700;
-    color: var(--blue); margin-bottom: 4px;
-    text-transform: uppercase; letter-spacing: .06em; opacity: .7;
+    font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px;
   }
-  .item .media {
-    margin-top: 12px;
-  }
-  .item .media img {
-    max-width: 100%; border-radius: 10px; border: 1px solid var(--line);
-  }
-  .item details {
-    margin-top: 12px; color: var(--mut); font-size: .82rem;
-  }
+  .item .media { margin-top: 10px; }
+  .item .media img { max-width: 100%; max-height: 360px; border-radius: 3px; border: 1px solid var(--line); display: block; }
+  .item details { margin-top: 10px; }
   .item details summary {
-    cursor: pointer; padding: 6px 10px; border-radius: 8px;
-    background: rgba(15, 23, 42, 0.5); border: 1px solid var(--line); display: inline-block;
-    list-style: none;
+    font-size: 12px; color: var(--dim); cursor: pointer;
+    user-select: none;
   }
-  .item details summary::-webkit-details-marker { display: none; }
-  .item details summary::before { content: "▸ "; transition: transform .15s; display: inline-block; }
-  .item details[open] summary::before { content: "▾ "; }
-  .item details pre {
-    background: rgba(2, 6, 23, 0.7); padding: 12px 14px; border-radius: 10px;
-    border: 1px solid var(--line);
-    overflow: auto; max-height: 320px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .82rem;
-    margin-top: 10px;
-  }
+  .item details pre { margin-top: 6px; font-size: 11.5px; max-height: 220px; }
 
-  .latency {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 6px; font-size: .72rem; font-weight: 600;
-    background: rgba(34, 197, 94, .1); color: var(--green); border: 1px solid rgba(34, 197, 94, .25);
-  }
-  .latency.warn { background: rgba(251, 191, 36, .1); color: var(--gold); border-color: rgba(251, 191, 36, .25); }
-  .latency.slow { background: rgba(239, 68, 68, .1); color: var(--red); border-color: rgba(239, 68, 68, .25); }
-
-  /* empty */
   .empty {
-    text-align: center; padding: 80px 30px; color: var(--mut);
-    background: var(--surface); border: 1px dashed var(--line-strong);
-    border-radius: 18px;
-    animation: fadeUp .5s ease-out;
+    padding: 60px 24px; text-align: center; color: var(--dim);
+    border: 1px dashed var(--line-2); border-radius: 4px;
+    background: var(--bg-2);
   }
-  .empty .ico { font-size: 3rem; margin-bottom: 12px; opacity: .6; }
-  .empty h3 { margin: 0 0 8px; color: var(--txt); font-size: 1.1rem; font-weight: 600; }
-  .empty p { margin: 0; font-size: .92rem; }
-  .empty a.link {
-    color: var(--gold); text-decoration: none; font-weight: 500;
-    border-bottom: 1px dashed rgba(251, 191, 36, .4); padding-bottom: 1px;
-  }
-  .empty a.link:hover { border-bottom-style: solid; }
-
-  /* responsive */
-  @media (max-width: 720px) {
-    .topbar-inner { padding: 10px 14px; gap: 8px; }
-    .topbar nav { display: none; }
-    .topbar .controls input { min-width: 0; flex: 1; }
-    .wrap { padding: 18px 14px 40px; }
-    .hero h1 { font-size: 1.25rem; }
-  }
+  .empty h3 { margin: 0 0 6px; color: var(--txt-2); }
+  .empty p { font-size: 12px; margin: 0; }
 </style>
 </head>
 <body>
@@ -292,41 +83,37 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <div class="logo">🦅</div>
-      <div><span class="name">Trump WS</span> <span class="tag">DEMO</span></div>
+      <span class="mark">TRUMP-WS</span>
+      <span class="name">实时演示</span>
     </div>
     <nav>
       <a href="/">首页</a>
-      <a href="/demo" class="active">实时演示</a>
-      <a href="/docs">对接文档</a>
-      <a href="/admin">管理后台</a>
+      <a href="/demo" class="active">演示</a>
+      <a href="/docs">文档</a>
+      <a href="/admin">管理</a>
     </nav>
-    <div class="spacer"></div>
-    <div class="controls">
-      <span class="status" id="status"><span class="pdot"></span><span id="statusText">未连接</span></span>
-      <input id="token" placeholder="粘贴 ttws_live_… API Key" autocomplete="off" spellcheck="false">
-      <button class="btn primary" id="btn">连接</button>
-    </div>
   </div>
 </div>
 
 <div class="wrap">
 
-  <div class="hero">
-    <h1><span class="ico">📡</span> 实时 WS 演示</h1>
-    <div class="meta">
-      <span class="chip">已接收 <b id="rcvCount">0</b> 条</span>
-      <span class="chip">订阅源 <b id="srcLabel">all</b></span>
-      <span class="chip">最近延迟 <b id="lastLatency">—</b></span>
-    </div>
+  <div class="demo-bar">
+    <span class="conn-dot off" id="dot"></span>
+    <span class="status-text" id="statusText">未连接</span>
+    <input id="token" placeholder="粘贴 ttws_live_… API Key" autocomplete="off" spellcheck="false">
+    <button class="btn primary" id="btn">连接</button>
+  </div>
+
+  <div class="meta-bar">
+    <span>已接收<b id="rcvCount">0</b></span>
+    <span>订阅<b id="srcLabel">all</b></span>
+    <span>最近端到端延迟<b id="lastLatency">—</b></span>
   </div>
 
   <div id="list">
     <div class="empty">
-      <div class="ico">📨</div>
-      <h3>等待新推文…</h3>
-      <p>请先在右上角粘贴一个 API Key 然后点"连接"。<br>
-      没有 Key？去 <a class="link" href="/admin">管理后台</a> 生成一个。</p>
+      <h3>等待连接</h3>
+      <p>粘贴 API Key,点"连接"。没有 Key 请到 <a href="/admin">管理后台</a> 生成。</p>
     </div>
   </div>
 
@@ -340,32 +127,29 @@ const MAX = 50;
 
 function setStatus(text, cls) {
   $('statusText').textContent = text;
-  $('status').className = 'status ' + (cls || '');
+  $('dot').className = 'conn-dot ' + (cls === 'connected' ? '' : cls === 'connecting' ? 'connecting' : 'off');
 }
 
 function fmtLatencyMs(ms) {
   if (ms == null || !isFinite(ms)) return null;
   if (ms < 1000) return ms + 'ms';
   if (ms < 60000) return (ms/1000).toFixed(1) + 's';
-  return Math.floor(ms/60000) + 'm' + Math.floor(ms/1000)%60 + 's';
+  return Math.floor(ms/60000) + 'm' + Math.floor((ms/1000) % 60) + 's';
 }
 function latencyClass(ms) {
   if (ms == null) return '';
-  if (ms < 5000) return '';
-  if (ms < 30000) return ' warn';
-  return ' slow';
+  if (ms < 10000) return '';
+  if (ms < 60000) return 'warn';
+  return 'slow';
+}
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function render() {
   $('rcvCount').textContent = received;
   if (items.length === 0) {
-    $('list').innerHTML = `
-      <div class="empty">
-        <div class="ico">⏳</div>
-        <h3>已连接，等待新推文…</h3>
-        <p>本服务每 10 秒拉一次 RSS（直连 Truth Social API 时每 3 秒）。<br>
-        Trump 不发新帖就不会有数据，可以先做做其他事。</p>
-      </div>`;
+    $('list').innerHTML = '<div class="empty"><h3>已连接,等待新推文</h3><p>服务每 10 秒轮询一次上游源。Trump 不发新帖时不会有数据。</p></div>';
     return;
   }
   $('list').innerHTML = '<div class="feed">' + items.map((t, idx) => {
@@ -374,27 +158,25 @@ function render() {
     const lag = recv - pub;
     const lagStr = fmtLatencyMs(lag);
     const time = new Date(t.pubDate || t.received_at).toLocaleString('zh-CN', { hour12: false });
-    const srcCls = t.source === 'rss' ? 'rss' : (t.source === 'truth' ? 'truth' : 'other');
+    const srcCls = (t.source || '').toLowerCase();
     return `
     <article class="item${idx === 0 && t._isNew ? ' new' : ''}">
-      <div class="meta">
-        <span class="src-pill ${srcCls}">${esc(t.source || '?')}</span>
-        <span class="when">📅 ${time}</span>
-        ${t.author ? `<span class="author">${esc(t.author)}</span>` : ''}
-        ${lagStr ? `<span class="latency${latencyClass(lag)}" title="发布到服务器接收的延迟">⚡ ${lagStr}</span>` : ''}
-        ${t.link ? `<a class="src" href="${esc(t.link)}" target="_blank" rel="noopener">原文 ↗</a>` : ''}
+      <div class="row1">
+        <span class="src ${esc(srcCls)}">${esc(t.source || '?')}</span>
+        <span>${esc(time)}</span>
+        ${t.author ? `<span>${esc(t.author)}</span>` : ''}
+        ${lagStr ? `<span class="lag ${latencyClass(lag)}" title="发布→接收延迟">+${lagStr}</span>` : ''}
+        ${t.link ? `<a href="${esc(t.link)}" target="_blank" rel="noopener">原文 ↗</a>` : ''}
       </div>
       <div class="title">${esc(t.title || '(无正文)')}</div>
       ${t.translated && t.translated !== t.title ? `
         <div class="tr">
-          <div class="label">中文翻译</div>
-          ${esc(t.translated)}
+          <div class="label">中文翻译</div>${esc(t.translated)}
         </div>` : ''}
       ${t.mediaUrl ? `<div class="media"><img src="${esc(t.mediaUrl)}" alt=""/></div>` : ''}
       <details><summary>原始 JSON</summary><pre>${esc(JSON.stringify(t, null, 2))}</pre></details>
     </article>`;
   }).join('') + '</div>';
-  // mark new only once
   setTimeout(() => { items.forEach(t => t._isNew = false); }, 1500);
 
   if (items[0]) {
@@ -404,13 +186,9 @@ function render() {
   }
 }
 
-function esc(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
 function connect() {
   const tok = $('token').value.trim();
-  if (!tok) { setStatus('请先填 API Key', 'error'); return; }
+  if (!tok) { setStatus('请先填 API Key', 'off'); return; }
   if (ws) { try { ws.close(); } catch {} ws = null; }
   setStatus('连接中…', 'connecting');
   const u = new URL('/ws', location.href);
@@ -434,18 +212,17 @@ function connect() {
       $('srcLabel').textContent = m.source || 'all';
     }
   };
-  ws.onerror = () => setStatus('连接错误', 'error');
+  ws.onerror = () => setStatus('连接错误', 'off');
   ws.onclose = (e) => {
     const reason = e.reason || '';
     const codeText = e.code === 4003 ? 'key 被撤销或过期' : ('code ' + e.code);
-    setStatus('已断开 · ' + (reason || codeText), 'error');
+    setStatus('已断开 · ' + (reason || codeText), 'off');
   };
 }
 
 $('btn').onclick = connect;
 $('token').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
 
-// 启动：如果 URL 上带 token，就自动连
 const urlTok = new URLSearchParams(location.search).get('token');
 if (urlTok) { $('token').value = urlTok; setTimeout(connect, 200); }
 </script>

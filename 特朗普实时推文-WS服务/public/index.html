@@ -3,272 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>特朗普实时推文 · WebSocket 数据服务</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Trump WS · WebSocket 实时推文数据服务</title>
+<link rel="stylesheet" href="/app.css">
 <style>
-  :root {
-    color-scheme: dark;
-    --bg-0: #050816;
-    --bg-1: #0b1226;
-    --surface: rgba(15, 23, 42, 0.6);
-    --line: rgba(148, 163, 184, 0.12);
-    --line-strong: rgba(148, 163, 184, 0.25);
-    --txt: #e2e8f0;
-    --txt-dim: #cbd5e1;
-    --mut: #94a3b8;
-    --gold: #fbbf24;
-    --red: #ef4444;
-    --green: #22c55e;
-    --blue: #38bdf8;
-    --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
-    --grad-primary: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
-    --grad-text: linear-gradient(90deg, #fbbf24, #f97316, #ef4444);
+  /* page-specific tweaks */
+  .lead { font-size: 16px; color: var(--txt-2); max-width: 720px; }
+  .lead .kw { color: var(--txt); }
+  .endpoints {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 14px 0;
+    font-size: 13px;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    min-height: 100vh;
-    background: var(--bg-0);
-    background-image:
-      radial-gradient(at 10% -10%, rgba(251, 191, 36, 0.14) 0px, transparent 40%),
-      radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.12) 0px, transparent 40%),
-      radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.08) 0px, transparent 50%);
-    color: var(--txt);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Microsoft YaHei, sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* topbar */
-  .topbar {
-    position: sticky; top: 0; z-index: 30;
-    backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    background: rgba(5, 8, 22, 0.72);
+  .endpoints > div {
+    padding: 9px 14px;
     border-bottom: 1px solid var(--line);
-  }
-  .topbar-inner {
-    max-width: 1240px; margin: 0 auto;
-    padding: 14px 28px;
-    display: flex; align-items: center; gap: 16px;
-  }
-  .brand {
-    display: flex; align-items: center; gap: 10px;
-    font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em;
-  }
-  .brand .logo {
-    width: 32px; height: 32px; border-radius: 9px;
-    background: var(--grad-primary);
-    display: grid; place-items: center;
-    box-shadow: 0 6px 20px -8px rgba(251, 191, 36, 0.6);
-    color: #0b0b0b; font-size: 1.05rem;
-  }
-  .brand .name {
-    background: var(--grad-text);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .topbar nav { display: flex; gap: 4px; margin-left: 14px; }
-  .topbar nav a {
-    color: var(--txt-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px;
-    font-size: .92rem; font-weight: 500; transition: all .15s;
-  }
-  .topbar nav a:hover { background: rgba(148, 163, 184, 0.1); color: var(--txt); }
-  .topbar nav a.active { color: var(--gold); background: rgba(251, 191, 36, 0.1); }
-  .topbar .spacer { flex: 1; }
-  .topbar .health {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 5px 11px; border-radius: 999px; font-size: .82rem; font-weight: 600;
-    background: rgba(34, 197, 94, .1); color: var(--green); border: 1px solid rgba(34, 197, 94, .25);
-  }
-  .topbar .health .pdot {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
-    animation: pulse-dot 2s infinite;
-  }
-  @keyframes pulse-dot {
-    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-  }
-
-  /* hero */
-  .hero {
-    max-width: 1100px; margin: 0 auto; padding: 80px 28px 40px;
-    text-align: center;
-    animation: fadeUp .6s ease-out;
-  }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  .hero .badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 5px 14px; border-radius: 999px; margin-bottom: 22px;
-    background: rgba(251, 191, 36, 0.10);
-    border: 1px solid rgba(251, 191, 36, 0.28);
-    color: var(--gold); font-size: .82rem; font-weight: 600;
-  }
-  .hero .badge .pdot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--gold);
-    animation: blink-dot 1.2s infinite;
-  }
-  @keyframes blink-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-  .hero h1 {
-    font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; margin: 0 0 16px;
-    letter-spacing: -.03em; line-height: 1.1;
-  }
-  .hero h1 .grad {
-    background: var(--grad-text);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero .sub {
-    color: var(--txt-dim); font-size: clamp(1rem, 1.6vw, 1.15rem);
-    margin: 0 auto 28px; max-width: 680px;
-  }
-  .hero .ctas {
-    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-    margin-bottom: 50px;
-  }
-  .btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 12px 22px; border: 0; border-radius: 11px;
-    font: inherit; font-weight: 600; font-size: .98rem; cursor: pointer;
-    text-decoration: none;
-    transition: transform .15s, filter .15s, box-shadow .15s;
-  }
-  .btn.primary {
-    background: var(--grad-primary); color: #0b0b0b;
-    box-shadow: 0 10px 28px -10px rgba(251, 191, 36, 0.5);
-  }
-  .btn.primary:hover { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 14px 32px -10px rgba(251, 191, 36, 0.65); }
-  .btn.ghost {
-    background: rgba(15, 23, 42, 0.6); color: var(--txt);
-    border: 1px solid var(--line-strong);
-  }
-  .btn.ghost:hover { background: rgba(30, 41, 59, 0.6); transform: translateY(-1px); }
-
-  /* stats */
-  .stats {
-    max-width: 1100px; margin: 0 auto; padding: 0 28px;
-    display: grid; gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    margin-bottom: 50px;
-    animation: fadeUp .6s ease-out .1s both;
-  }
-  .stat {
-    position: relative; overflow: hidden;
-    padding: 24px;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    text-align: center;
-    transition: transform .2s, border-color .2s;
   }
-  .stat:hover { transform: translateY(-3px); border-color: var(--line-strong); }
-  .stat .ico {
-    width: 44px; height: 44px; border-radius: 12px; margin: 0 auto 12px;
-    display: grid; place-items: center;
-    background: rgba(251, 191, 36, 0.10); color: var(--gold);
-    font-size: 1.3rem;
-    border: 1px solid rgba(251, 191, 36, 0.22);
+  .endpoints > div:nth-child(odd) {
+    color: var(--dim);
+    background: var(--bg-2);
+    font-size: 12px;
   }
-  .stat b {
-    display: block; font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
-    background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent;
-    font-variant-numeric: tabular-nums;
-    margin-bottom: 4px;
-  }
-  .stat span { color: var(--mut); font-size: .85rem; font-weight: 500; }
-
-  /* cards */
-  .features {
-    max-width: 1100px; margin: 0 auto; padding: 0 28px;
-    display: grid; gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    margin-bottom: 50px;
-    animation: fadeUp .6s ease-out .15s both;
-  }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px; padding: 26px;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    transition: transform .2s, border-color .2s;
-    display: flex; flex-direction: column;
-  }
-  .card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
-  .card .ic {
-    width: 44px; height: 44px; border-radius: 12px;
-    display: grid; place-items: center;
-    background: rgba(251, 191, 36, 0.10); color: var(--gold);
-    font-size: 1.3rem;
-    border: 1px solid rgba(251, 191, 36, 0.22);
-    margin-bottom: 14px;
-  }
-  .card h3 {
-    margin: 0 0 8px; font-size: 1.1rem; font-weight: 700;
-  }
-  .card p { margin: 0 0 18px; color: var(--mut); font-size: .92rem; flex: 1; }
-  .card .go {
-    color: var(--gold); text-decoration: none; font-weight: 600; font-size: .9rem;
-    display: inline-flex; align-items: center; gap: 5px; transition: gap .15s;
-  }
-  .card .go:hover { gap: 9px; }
-
-  /* endpoint */
-  .endpoint {
-    max-width: 1100px; margin: 0 auto 50px; padding: 0 28px;
-    animation: fadeUp .6s ease-out .2s both;
-  }
-  .endpoint .ep-box {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px; padding: 20px 24px;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    backdrop-filter: blur(14px);
-  }
-  .endpoint .ep-box .lbl { color: var(--mut); font-size: .88rem; font-weight: 500; }
-  .endpoint .ep-box code {
-    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-    background: rgba(2, 6, 23, 0.7); color: var(--gold);
-    padding: 8px 14px; border-radius: 8px; font-size: .9rem;
-    border: 1px solid rgba(251, 191, 36, 0.15);
-    flex: 1; min-width: 240px; word-break: break-all;
-  }
-  .endpoint .ep-box .copy-btn {
-    background: rgba(251, 191, 36, 0.10); color: var(--gold);
-    border: 1px solid rgba(251, 191, 36, 0.28);
-    padding: 7px 14px; border-radius: 8px; font: inherit; font-size: .85rem; font-weight: 600;
-    cursor: pointer; transition: background .15s;
-  }
-  .endpoint .ep-box .copy-btn:hover { background: rgba(251, 191, 36, 0.18); }
-
-  footer {
-    max-width: 1100px; margin: 0 auto; padding: 32px 28px 60px;
-    color: var(--mut); font-size: .82rem; text-align: center;
-    border-top: 1px solid var(--line);
-  }
-  footer p { margin: 4px 0; }
-
-  /* toast */
-  .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: rgba(15, 23, 42, 0.95);
-    border: 1px solid var(--line-strong);
-    color: var(--txt); padding: 10px 18px; border-radius: 11px;
-    font-size: .9rem; font-weight: 500;
-    box-shadow: var(--shadow);
-    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
-    z-index: 70;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  @media (max-width: 720px) {
-    .topbar-inner { padding: 12px 16px; gap: 8px; }
-    .topbar nav { display: none; }
-    .hero { padding: 40px 20px 30px; }
-    .stats, .features, .endpoint { padding-left: 16px; padding-right: 16px; }
-  }
+  .endpoints > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .endpoints code { background: transparent; border: 0; padding: 0; }
+  .latency-table small { display: block; color: var(--mute); margin-top: 2px; }
+  .footer { color: var(--mute); font-size: 12px; padding: 24px 0 0; border-top: 1px solid var(--line); margin-top: 40px; }
 </style>
 </head>
 <body>
@@ -276,123 +40,87 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <div class="logo">🦅</div>
-      <span class="name">Trump WS</span>
+      <span class="mark">TRUMP-WS</span>
+      <span class="name">实时推文数据服务</span>
     </div>
     <nav>
       <a href="/" class="active">首页</a>
-      <a href="/demo">实时演示</a>
-      <a href="/docs">对接文档</a>
-      <a href="/admin">管理后台</a>
+      <a href="/demo">演示</a>
+      <a href="/docs">文档</a>
+      <a href="/admin">管理</a>
     </nav>
-    <div class="spacer"></div>
-    <span class="health"><span class="pdot"></span>服务在线</span>
   </div>
 </div>
 
-<section class="hero">
-  <div class="badge"><span class="pdot"></span>实时 · 自托管 · 低延迟</div>
-  <h1>
-    特朗普实时推文 ·
-    <span class="grad">WS 数据服务</span>
-  </h1>
-  <p class="sub">
-    自托管的 Truth Social 实时监控 → 多源轮询 → AI 翻译 → WebSocket 广播。<br>
-    给你的 AI 助理 / 交易机器人 / 量化系统 / 下游消费者用的低延迟数据通道。
-  </p>
-  <div class="ctas">
-    <a class="btn primary" href="/demo">📡 看实时演示</a>
-    <a class="btn ghost" href="/docs">📖 对接文档</a>
-  </div>
-</section>
+<div class="wrap">
 
-<section class="stats">
-  <div class="stat">
-    <div class="ico">💬</div>
-    <b id="stHist">…</b>
-    <span>缓存推文</span>
+  <div class="section">
+    <h1>Donald Trump · Truth Social 实时推文 WebSocket 推送</h1>
+    <p class="lead">
+      多源轮询 Trump 在 Truth Social 的发帖，<span class="kw">秒级</span>通过 WebSocket 推送给已授权客户端。
+      返回字段包含<span class="kw">英文原文</span>与<span class="kw">中文翻译</span>，可直接喂给 AI 模型或量化策略。
+    </p>
   </div>
-  <div class="stat">
-    <div class="ico">🔌</div>
-    <b id="stWs">…</b>
-    <span>WS 在线连接</span>
+
+  <div class="section">
+    <h2>接口入口</h2>
+    <div class="endpoints">
+      <div>WS 端点</div>           <div><code>ws://&lt;host&gt;:8787/ws?token=&lt;your_api_key&gt;</code></div>
+      <div>历史 HTTP</div>          <div><code>GET /api/tweets?limit=50</code></div>
+      <div>健康检查</div>            <div><code>GET /health</code></div>
+      <div>对接文档</div>            <div><a href="/docs">/docs</a></div>
+      <div>实时演示</div>            <div><a href="/demo">/demo</a> （需带 key）</div>
+      <div>管理后台</div>            <div><a href="/admin">/admin</a> （生成 / 撤销 key）</div>
+    </div>
   </div>
-  <div class="stat">
-    <div class="ico">🔑</div>
-    <b id="stKey">—</b>
-    <span>启用的 API Key</span>
+
+  <div class="section">
+    <h2>数据链路</h2>
+    <table class="latency-table">
+      <thead>
+        <tr><th>环节</th><th>典型耗时</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Truth Social 发帖 → 上游索引</td>
+          <td>30 – 80 秒</td>
+          <td>免费源（trumpstruth.org / Mastodon RSS）的固有节奏</td>
+        </tr>
+        <tr>
+          <td>上游 → 本服务轮询命中</td>
+          <td>0 – 5 秒</td>
+          <td>多源并发，最快者赢；HTTP ETag / If-Modified-Since</td>
+        </tr>
+        <tr>
+          <td>本服务 → WebSocket 客户端</td>
+          <td>&lt; 50 ms</td>
+          <td>单次 JSON 帧，无队列</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="dim" style="font-size:12px;">
+      合计端到端典型 30 – 90 秒。这是当前免费数据源的物理下界 —
+      想压到 sub-10 秒需付费上游或绑 Truth Social 账号。
+    </p>
   </div>
-  <div class="stat">
-    <div class="ico">⚡</div>
-    <b id="stLatency">30-90s</b>
-    <span>典型链路延迟（RSS 路径）</span>
+
+  <div class="section">
+    <h2>使用流程</h2>
+    <ol style="color: var(--txt-2); padding-left: 20px; line-height: 1.9;">
+      <li>到 <a href="/admin">/admin</a> 登录后台，生成一把 API Key（明文仅显示一次，请立即保存）</li>
+      <li>客户端用 <code>ws://...?token=...</code> 建立 WebSocket 连接</li>
+      <li>连接建立后服务端先发 <code>hello</code> 帧；客户端可发 <code>{"type":"history","limit":50}</code> 拉取历史</li>
+      <li>有新帖时服务端推送 <code>{"type":"tweet","data":{...}}</code>，字段见 <a href="/docs">文档</a></li>
+      <li>Key 撤销 / 过期时所有该 key 的连接会被服务端踢断（close code 4003）</li>
+    </ol>
   </div>
-</section>
 
-<section class="features">
-  <div class="card">
-    <div class="ic">📡</div>
-    <h3>实时演示</h3>
-    <p>直接看 WebSocket 推送效果——连上之后新帖一来就出现，含原文 + 中文翻译 + 来源标签 + 端到端延迟。需要在管理后台先生成一个 API Key。</p>
-    <a class="go" href="/demo">打开 Demo →</a>
+  <div class="footer">
+    <span class="mark mono" style="color: var(--accent);">TRUMP-WS</span> ·
+    自托管 WebSocket 数据服务 · 单一目的、单一服务、单一文件数据库
   </div>
-  <div class="card">
-    <div class="ic">📖</div>
-    <h3>对接文档</h3>
-    <p>WebSocket 消息协议、鉴权方式、心跳、消息字段定义；Python / Node.js / Go 三套客户端示例代码；HTTP 备用接口与错误码说明。</p>
-    <a class="go" href="/docs">查看文档 →</a>
-  </div>
-  <div class="card">
-    <div class="ic">🔐</div>
-    <h3>管理后台</h3>
-    <p>生成 / 撤销 API Key，设置过期时间（1 小时 / 1 天 / 7 天 / 1 年 / 永久 / 自定义）。撤销时已建立的 WS 连接会被立即踢出。</p>
-    <a class="go" href="/admin">进入后台 →</a>
-  </div>
-</section>
 
-<section class="endpoint">
-  <div class="ep-box">
-    <span class="lbl">WS 端点</span>
-    <code id="wsUrl">ws://this-host/ws?token=&lt;your_api_key&gt;</code>
-    <button class="copy-btn" id="copyEpBtn">复制</button>
-  </div>
-</section>
+</div>
 
-<footer>
-  <p>© 特朗普实时推文 · WS 服务 — 仅供内部 / 授权用户使用</p>
-  <p style="opacity:.6;">不开放公开注册 · Key 由管理员手动签发</p>
-</footer>
-
-<div class="toast" id="toast">已复制</div>
-
-<script>
-  function toast(t) {
-    const el = document.getElementById('toast');
-    el.textContent = t; el.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1800);
-  }
-
-  fetch('/health').then(r => r.json()).then(h => {
-    document.getElementById('stHist').textContent = h.history ?? 0;
-    document.getElementById('stWs').textContent = h.ws?.clients ?? 0;
-  }).catch(()=>{
-    document.getElementById('stHist').textContent = '?';
-    document.getElementById('stWs').textContent = '?';
-  });
-
-  const u = new URL(location.href);
-  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-  u.pathname = '/ws';
-  u.search = '?token=<your_api_key>';
-  document.getElementById('wsUrl').textContent = u.toString();
-  document.getElementById('stKey').textContent = '后台查看';
-
-  document.getElementById('copyEpBtn').onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(document.getElementById('wsUrl').textContent);
-      toast('已复制到剪贴板');
-    } catch { toast('复制失败'); }
-  };
-</script>
 </body>
 </html>

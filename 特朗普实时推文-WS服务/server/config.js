@@ -14,8 +14,8 @@ function int(v, def) {
 const config = {
   port: int(process.env.PORT, 8787),
 
-  // 默认 admin 口令；.env 里设 ADMIN_PASSWORD 即覆盖
-  adminPassword: process.env.ADMIN_PASSWORD || 'chuankangkk',
+  // admin 口令必须通过 .env 的 ADMIN_PASSWORD 提供；为空时 admin 接口将拒绝所有请求
+  adminPassword: process.env.ADMIN_PASSWORD || '',
 
   dbFile: path.resolve(process.cwd(), process.env.DB_FILE || './data/state.db'),
 
