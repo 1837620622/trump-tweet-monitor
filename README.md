@@ -49,9 +49,9 @@
 
 | Module | Public demo | Commercial license |
 |:--|:--|:--|
-| **Posts** | Truth text + Chinese + **image/video** (demo cap) | Full history · lower latency · WeChat push |
+| **Posts** | Truth text + Chinese + **image/video** (latest **15**) | Full history · lower latency · WeChat push |
 | **Media** | Adaptive enrich from RSS / archive HTML / previews | Same pipeline · private deploy |
-| **Trades** | OGE buy/sell cards (demo cap) | Full sync · Webhook / WSS |
+| **Trades** | OGE buy/sell cards (latest **15**) | Full sync · Webhook / WSS |
 | **Accounts** | Social · family · White House · finance · records · media · archive | Multi-account expansion |
 | **Agent protocol** | Not public | WSS JSON + API Key + schema |
 | **Source code** | Not public | Cloudflare Worker + Node WSS stack |
@@ -91,7 +91,8 @@ The live site is **display-only**. Browsers can use it; bulk scrapers should not
 | IP rate limit | Burst protection (Cache API first, saves free KV writes) |
 | Strike → ban | Repeated bot abuse → temporary IP ban |
 | CORS allowlist | Blocks third-party websites from calling the API |
-| Demo item cap + short cache | Not a full-history export |
+| Demo item cap (15) + short cache | Scroll for more → GitHub / WeChat buy CTA |
+| End-of-feed gate | No free infinite scroll of history |
 | Raw RSS proxy | Disabled on public demo |
 | Admin endpoints | Header secret only (no `?secret=` in URL) |
 
