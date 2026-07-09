@@ -5,12 +5,12 @@
 <h1 align="center">Trump Tracker</h1>
 
 <p align="center">
-  <b>Trump Tracker</b><br/>
-  <sub>Truth Social 实时帖文 · 中文翻译 · OGE 股票披露交易</sub>
+  <b>Truth Social posts · Chinese translation · OGE stock trades</b><br/>
+  <sub>X-style demo · full showcase features · commercial source / WSS</sub>
 </p>
 
 <p align="center">
-  <i>One feed. Posts + trades. Built like X — sold as a product.</i>
+  <i>One feed. Posts + trades + tracked accounts. Built like X — sold as a product.</i>
 </p>
 
 <p align="center">
@@ -21,6 +21,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Posts-Truth_Social-0f1419?style=flat-square" alt="Posts" />
+  <img src="https://img.shields.io/badge/Media-Image_|_Video-1d9bf0?style=flat-square" alt="Media" />
   <img src="https://img.shields.io/badge/Trades-OGE_Disclosure-00ba7c?style=flat-square" alt="Trades" />
   <img src="https://img.shields.io/badge/i18n-EN_|_中文-71767b?style=flat-square" alt="i18n" />
   <img src="https://img.shields.io/badge/Security-Session_+_Rate_Limit-b91c1c?style=flat-square" alt="Security" />
@@ -29,117 +30,128 @@
 
 ---
 
-## 打开即用
+## Live demo
 
 ### [https://trump-x.chuankangkk.top/](https://trump-x.chuankangkk.top/)
 
 | | |
 |:--|:--|
-| **品牌** | **Trump Tracker**（英文标题 · 简约追踪） |
-| **体验** | 无需注册 · 手机 / iPad / 电脑自适应 |
-| **语言** | 右上角 **EN / 中文**（默认跟时区） |
-| **Tab** | 帖文 · 股票交易 · 追踪账号 |
+| **Brand** | **Trump Tracker** (English title) |
+| **UI** | X-style three-column layout · mobile ready |
+| **Language** | Language switcher (default English) |
+| **Tabs** | Posts · Trades · Accounts |
 
-> 刷帖 → 切交易 → 看追踪源 → 商务合作谈交付。
-
----
-
-## 一句话
-
-**特朗普公开动态与披露交易，收成一条可刷的时间线。**  
-完整协议、推送与源码 — **只卖给授权客户**。
+> Browse the feed → open trades → explore tracked sources → contact for commercial delivery.
 
 ---
 
-## 你能用到什么
+## What you get
 
-| 模块 | 展示站 | 商业授权 |
+| Module | Public demo | Commercial license |
 |:--|:--|:--|
-| **帖文** | Truth 原文 + 中文 + 媒体（演示条数） | 全量 · 更低延迟 · 微信推送 |
-| **股票交易** | OGE 买卖卡片（演示条数） | 全量同步 · Webhook / WSS |
-| **追踪账号** | 社媒 / 财经 / 官方 / 归档 / 本项目 · 分类清晰 | 多账号扩展 |
-| **Agent 协议** | 不开放 | WSS JSON + Key + Schema |
-| **源码** | 不开放 | Workers + Node 自托管工程 |
+| **Posts** | Truth text + Chinese + **image/video** (demo cap) | Full history · lower latency · WeChat push |
+| **Media** | Adaptive enrich from RSS / archive HTML / previews | Same pipeline · private deploy |
+| **Trades** | OGE buy/sell cards (demo cap) | Full sync · Webhook / WSS |
+| **Accounts** | Social · family · White House · finance · records · media · archive | Multi-account expansion |
+| **Agent protocol** | Not public | WSS JSON + API Key + schema |
+| **Source code** | Not public | Cloudflare Worker + Node WSS stack |
+
+**Demo = full product surface for humans.**  
+**Not free scrapable API / not free protocol / not free source.**
 
 ---
 
-## 追踪账号分类（展示站）
+## Tracked account categories
 
-| 分类 | 示例 |
+| Category | Examples |
 |:--|:--|
-| **社媒动态** | @realDonaldTrump（Truth Social）、White House |
-| **财经披露** | OGE 交易、Quiver Tracker、@TrumpsPortfolio、OGE 官网 |
-| **归档镜像** | trumpstruth.org、GovInfo 总统文献 |
-| **本项目** | GitHub 仓库与商务入口 |
+| **Primary** | Truth Social @realDonaldTrump · X · Truth platform |
+| **Family & allies** | Melania · DT Jr. · Eric · Lara |
+| **White House** | whitehouse.gov · @WhiteHouse · JD Vance · press · RNC |
+| **Finance** | OGE trades · Quiver · portfolio trackers · OpenSecrets · FEC |
+| **Official records** | OGE · GovInfo · Federal Register |
+| **Media & research** | C-SPAN · Ballotpedia · Wikipedia |
+| **Archive** | trumpstruth.org |
+| **Project** | This GitHub marketing repo |
 
-标签说明：**演示接入** = 本站已用 · **外链** = 跳转官方/第三方 · **不稳定** = 第三方号可能变更。
+Tags: **In demo** = used by this site · **External** = open link · **Unstable** = third-party may change.
 
 ---
 
-## 展示站安全
+## Demo security (anti-crawl)
 
-| 措施 | 作用 |
+The live site is **display-only**. Browsers can use it; bulk scrapers should not.
+
+| Control | Purpose |
 |:--|:--|
-| 会话 Cookie | HttpOnly + Secure；须先打开网页 |
-| Bot / 自动化拦截 | curl、python、空 UA 等直接 403 |
-| Sec-Fetch 校验 | 挡「偷 cookie + 脚本复用」 |
-| 会话配额 | 单会话每小时演示 API 有限次 |
-| IP 限流 + 违规封禁 | 防刷会话 / 扫接口 / 累计拉黑 |
-| CORS 白名单 | 挡第三方网页跨域扒数据 |
-| 条数上限 + 短缓存 | 演示非全库；降低批量镜像价值 |
-| 关闭 RSS 代理 | 防当镜像源白嫖 |
-| 管理口密钥 | 仅 Header 鉴权，禁止 URL 传 secret |
+| Session cookie | HttpOnly + Secure · open the page first |
+| Bot / automation UA | curl / python / empty UA → 403 |
+| Sec-Fetch soft gate | Scripts reusing cookies get tighter limits |
+| Session quota | Limited demo API calls per session / hour |
+| IP rate limit | Burst protection (Cache API first, saves free KV writes) |
+| Strike → ban | Repeated bot abuse → temporary IP ban |
+| CORS allowlist | Blocks third-party websites from calling the API |
+| Demo item cap + short cache | Not a full-history export |
+| Raw RSS proxy | Disabled on public demo |
+| Admin endpoints | Header secret only (no `?secret=` in URL) |
 
-**商业 WSS / 全量 API / 协议文档 / 源码 = 购买后交付。**  
-禁止未授权爬取、镜像、转售。发现自动化滥用将封禁 IP。
+**Commercial WSS / full API / protocol docs / source = paid delivery only.**  
+Unauthorized crawling, mirroring, or resale is prohibited. Abuse may result in IP ban.
 
 ---
 
-## 商务档位
+## Free Cloudflare plan notes
 
-| 档位 | 交付 | 备注示例 |
+This demo is tuned for **Workers Free**:
+
+| Resource | Free-ish limit | Our approach |
 |:--|:--|:--|
-| 微信自动推送 | 新帖触达微信 | `推送订阅` |
-| 完整源码授权 | CF Worker + WS 工程 | `买源码` |
-| WSS / API | Key · JSON 流 | `API对接` |
-| 定制开发 | 多账号 / 私有部署 | `定制开发` |
-| 渠道白标 | 分销 | `商务合作` |
+| Requests | ~100k / day | Cron every **2 minutes** (~720/day) |
+| KV writes | ~1000 / day | No KV write when no new posts · rate limit prefers Cache API |
+| CPU | short per invoke | Media enrich concurrent · translate capped · timeouts |
+| Realtime | RSS archive lag dominates | Cron + 30s frontend poll · warm cache on new posts |
 
-价格按范围谈，**微信沟通为准**。
+Faster than “every few minutes” usually needs a **self-hosted poller / paid plan / Truth API**, not denser free cron alone.
 
 ---
 
-## 联系
+## Commercial packages
+
+| Package | Deliverable | WeChat note example |
+|:--|:--|:--|
+| WeChat push | Instant alerts on new posts | `推送订阅` |
+| Full source | CF Worker + WS codebase | `买源码` |
+| WSS / API | Key · JSON stream · schema | `API对接` |
+| Custom build | Multi-account · private deploy | `定制开发` |
+| White-label | Reseller / channel | `商务合作` |
+
+Pricing by scope — **WeChat is the source of truth**.
+
+---
+
+## Contact
 
 <p align="center">
   <img src="assets/wechat-qrcode.png" width="220" alt="WeChat" />
 </p>
 
 <p align="center">
-  <b>微信 1837620622</b>（传康Kk）<br/>
-  邮箱 2040168455@qq.com · 咸鱼 / B 站：万能程序员<br/>
-  <a href="https://trump-x.chuankangkk.top/"><b>Trump Tracker Live →</b></a>
+  <b>WeChat 1837620622</b> (传康Kk)<br/>
+  Email 2040168455@qq.com · Xianyu / Bilibili: 万能程序员<br/>
+  Add WeChat with a note: <code>推送订阅</code> / <code>买源码</code> / <code>API对接</code> / <code>商务合作</code>
 </p>
 
-加微信请 **备注来意**（推送订阅 / 买源码 / API对接 / 商务合作 / 定制开发）。
-
 ---
 
-## 声明
+## Repository notice
 
-1. 第三方聚合展示，与 Truth Social / X **无官方隶属**。  
-2. 数据来自公开渠道；**披露交易不构成投资建议**。  
-3. 源码与协议仅商业授权。  
-4. 演示站体验用；SLA 以合同为准。
+This public repository is **marketing only** (README + assets).
+
+- Full Worker / WSS source lives in a private tree and is **not** published here.
+- Do not expect runnable server code in this repo.
 
 ---
-
-## 作者
-
-**万能程序员 · 传康Kk** · 微信 **1837620622**
-
-**Trump Tracker** — *feel the pulse before the noise.*
 
 <p align="center">
-  <sub>Star if useful · License if production · WeChat 1837620622</sub>
+  <sub>© Trump Tracker · commercial product · not affiliated with Truth Social, X, or the U.S. government</sub>
 </p>
