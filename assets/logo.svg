@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-label="Trump Truth Monitor">
+  <rect width="128" height="128" rx="28" fill="#0A0A0A"/>
+  <rect x="1" y="1" width="126" height="126" rx="27" stroke="#2F3336" stroke-width="2"/>
+  <circle cx="64" cy="64" r="38" stroke="#1D9BF0" stroke-width="3" fill="none"/>
+  <path d="M44 70c6 10 14 16 20 16s14-6 20-16" stroke="#E7E9EA" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <circle cx="52" cy="56" r="4" fill="#E7E9EA"/>
+  <circle cx="76" cy="56" r="4" fill="#E7E9EA"/>
+  <path d="M64 28v12M64 88v12M28 64h12M88 64h12" stroke="#1D9BF0" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+</svg>
