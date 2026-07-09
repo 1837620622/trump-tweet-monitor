@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/logo.svg" width="88" height="88" alt="Trump Pulse" />
+  <img src="assets/logo.svg" width="88" height="88" alt="Trump Tracker" />
 </p>
 
-<h1 align="center">Trump Pulse</h1>
+<h1 align="center">Trump Tracker</h1>
 
 <p align="center">
-  <b>川普脉动</b><br/>
+  <b>Trump Tracker</b><br/>
   <sub>Truth Social 实时帖文 · 中文翻译 · OGE 股票披露交易</sub>
 </p>
 
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://trump-x.chuankangkk.top/">
-    <img src="https://img.shields.io/badge/Live_Demo-Open_Trump_Pulse-1d9bf0?style=for-the-badge" alt="Live Demo" />
+    <img src="https://img.shields.io/badge/Live_Demo-Open_Trump_Tracker-1d9bf0?style=for-the-badge" alt="Live Demo" />
   </a>
 </p>
 
@@ -35,7 +35,7 @@
 
 | | |
 |:--|:--|
-| **品牌** | **Trump Pulse**（中文：**川普脉动**） |
+| **品牌** | **Trump Tracker**（英文标题 · 简约追踪） |
 | **体验** | 无需注册 · 手机 / iPad / 电脑自适应 |
 | **语言** | 右上角 **EN / 中文**（默认跟时区） |
 | **Tab** | 帖文 · 股票交易 · 追踪账号 |
@@ -118,7 +118,7 @@
 <p align="center">
   <b>微信 1837620622</b>（传康Kk）<br/>
   邮箱 2040168455@qq.com · 咸鱼 / B 站：万能程序员<br/>
-  <a href="https://trump-x.chuankangkk.top/"><b>Trump Pulse Live →</b></a>
+  <a href="https://trump-x.chuankangkk.top/"><b>Trump Tracker Live →</b></a>
 </p>
 
 加微信请 **备注来意**（推送订阅 / 买源码 / API对接 / 商务合作 / 定制开发）。
@@ -138,7 +138,7 @@
 
 **万能程序员 · 传康Kk** · 微信 **1837620622**
 
-**Trump Pulse** — *feel the pulse before the noise.*
+**Trump Tracker** — *feel the pulse before the noise.*
 
 <p align="center">
   <sub>Star if useful · License if production · WeChat 1837620622</sub>
