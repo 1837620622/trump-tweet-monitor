@@ -1,0 +1,29 @@
+# 完整源码与可运行工程（仅本地保留，禁止推送）
+_private/
+
+# 环境变量与密钥
+.env
+.env.*
+!.env.example
+
+# 依赖与运行时
+node_modules/
+**/node_modules/
+**/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志与缓存
+*.log
+.npm/
+.cache/
+.wrangler/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
